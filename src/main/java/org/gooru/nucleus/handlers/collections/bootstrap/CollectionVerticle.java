@@ -36,7 +36,7 @@ public class CollectionVerticle extends AbstractVerticle {
 
     EventBus eb = vertx.eventBus();
 
-    eb.consumer(MessagebusEndpoints.MBEP_RESOURCE, message -> {
+    eb.consumer(MessagebusEndpoints.MBEP_COLLECTION, message -> {
 
       LOGGER.debug("Received message: " + message.body());
 
