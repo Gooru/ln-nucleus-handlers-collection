@@ -1,7 +1,7 @@
 package org.gooru.nucleus.handlers.collections.processors;
 
-import io.vertx.core.json.JsonObject;
+import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
 
 public interface Processor {
-  public JsonObject process();
+  public MessageResponse process();
 }

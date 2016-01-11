@@ -6,6 +6,6 @@ public class MessagebusEndpoints {
    */
   public static final String MBEP_COLLECTION = "org.gooru.nucleus.message.bus.collection";
   public static final String MBEP_EVENT = "org.gooru.nucleus.message.bus.publisher.event";
-  
+
 
 }

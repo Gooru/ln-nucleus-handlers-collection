@@ -2,16 +2,15 @@ package org.gooru.nucleus.handlers.collections.bootstrap;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
-import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.collections.bootstrap.shutdown.Finalizer;
 import org.gooru.nucleus.handlers.collections.bootstrap.shutdown.Finalizers;
 import org.gooru.nucleus.handlers.collections.bootstrap.startup.Initializer;
 import org.gooru.nucleus.handlers.collections.bootstrap.startup.Initializers;
-import org.gooru.nucleus.handlers.collections.constants.MessageConstants;
 import org.gooru.nucleus.handlers.collections.constants.MessagebusEndpoints;
 import org.gooru.nucleus.handlers.collections.processors.ProcessorBuilder;
+import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +18,7 @@ import org.slf4j.LoggerFactory;
  * Created by ashish on 25/12/15.
  */
 public class CollectionVerticle extends AbstractVerticle {
+
   static final Logger LOGGER = LoggerFactory.getLogger(CollectionVerticle.class);
 
   @Override
@@ -42,14 +42,13 @@ public class CollectionVerticle extends AbstractVerticle {
       LOGGER.debug("Received message: " + message.body());
 
       vertx.executeBlocking(future -> {
-        JsonObject result = new ProcessorBuilder(message).build().process();
+        MessageResponse result = new ProcessorBuilder(message).build().process();
         future.complete(result);
       }, res -> {
-        JsonObject result = (JsonObject) res.result();
-        DeliveryOptions options = new DeliveryOptions().addHeader(MessageConstants.MSG_OP_STATUS, result.getString(MessageConstants.MSG_OP_STATUS));
-        message.reply(result.getJsonObject(MessageConstants.RESP_CONTAINER_MBUS), options);
+        MessageResponse result = (MessageResponse) res.result();
+        message.reply(result.reply(), result.deliveryOptions());
 
-        JsonObject eventData = result.getJsonObject(MessageConstants.RESP_CONTAINER_EVENT);
+        JsonObject eventData = result.event();
         if (eventData != null) {
           eb.publish(MessagebusEndpoints.MBEP_EVENT, eventData);
         }
@@ -79,7 +78,7 @@ public class CollectionVerticle extends AbstractVerticle {
       for (Initializer initializer : initializers) {
         initializer.initializeComponent(vertx, config());
       }
-    } catch(IllegalStateException ie) {
+    } catch (IllegalStateException ie) {
       LOGGER.error("Error initializing application", ie);
       Runtime.getRuntime().halt(1);
     }
@@ -87,7 +86,7 @@ public class CollectionVerticle extends AbstractVerticle {
 
   private void shutDownApplication() {
     Finalizers finalizers = new Finalizers();
-    for (Finalizer finalizer : finalizers ) {
+    for (Finalizer finalizer : finalizers) {
       finalizer.finalizeComponent();
     }
 
