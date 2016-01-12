@@ -10,17 +10,17 @@ public class Initializers implements Iterable<Initializer> {
 
 
   private List<Initializer> initializers = null;
-  private Iterator<Initializer> internalIterator;
+  private final Iterator<Initializer> internalIterator;
 
   public Initializers() {
-    initializers = new ArrayList<Initializer>();
+    initializers = new ArrayList<>();
     initializers.add(DataSourceRegistry.getInstance());
     internalIterator = initializers.iterator();
   }
 
   @Override
   public Iterator<Initializer> iterator() {
-    Iterator<Initializer> iterator = new Iterator<Initializer>() {
+    return new Iterator<Initializer>() {
 
       @Override
       public boolean hasNext() {
@@ -33,7 +33,6 @@ public class Initializers implements Iterable<Initializer> {
       }
 
     };
-    return iterator;
   }
 
 

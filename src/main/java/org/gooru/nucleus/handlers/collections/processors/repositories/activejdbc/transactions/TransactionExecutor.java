@@ -30,7 +30,7 @@ public class TransactionExecutor {
   }
 
   private ExecutionResult<MessageResponse> executeWithTransaction(DBHandler handler) {
-    ExecutionResult<MessageResponse> executionResult = null;
+    ExecutionResult<MessageResponse> executionResult;
 
     try {
       Base.open(DataSourceRegistry.getInstance().getDefaultDataSource());
@@ -49,7 +49,7 @@ public class TransactionExecutor {
       Base.rollbackTransaction();
       LOGGER.error("Caught exeption, need to rollback and abort", e);
       // Most probably we do not know what to do with this, so send internal error
-      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createInternalErrorResponse(e.getMessage()),
+      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(e.getMessage()),
         ExecutionResult.ExecutionStatus.FAILED);
     } finally {
       if (handler.handlerReadOnly()) {

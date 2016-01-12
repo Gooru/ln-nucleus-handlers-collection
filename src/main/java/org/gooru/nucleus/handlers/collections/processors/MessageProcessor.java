@@ -13,10 +13,10 @@ import org.slf4j.LoggerFactory;
 class MessageProcessor implements Processor {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class);
-  String userId;
-  JsonObject prefs;
-  JsonObject request;
-  private Message<Object> message;
+  private String userId;
+  private JsonObject prefs;
+  private JsonObject request;
+  private final Message<Object> message;
 
   public MessageProcessor(Message<Object> message) {
     this.message = message;
@@ -24,7 +24,7 @@ class MessageProcessor implements Processor {
 
   @Override
   public MessageResponse process() {
-    MessageResponse result = null;
+    MessageResponse result;
     try {
       // Validate the message itself
       ExecutionResult<MessageResponse> validateResult = validateAndInitialize();

@@ -14,9 +14,9 @@ public class MessageResponse {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MessageResponse.class);
   private final JsonObject response;
-  private DeliveryOptions deliveryOptions;
-  private JsonObject reply;
-  private JsonObject event;
+  private final DeliveryOptions deliveryOptions;
+  private final JsonObject reply;
+  private final JsonObject event;
 
   // Private constructor
   private MessageResponse(JsonObject response) {

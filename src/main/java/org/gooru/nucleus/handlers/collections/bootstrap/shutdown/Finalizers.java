@@ -10,10 +10,10 @@ public class Finalizers implements Iterable<Finalizer> {
 
 
   private List<Finalizer> finalizers = null;
-  private Iterator<Finalizer> internalIterator;
+  private final Iterator<Finalizer> internalIterator;
 
   public Finalizers() {
-    finalizers = new ArrayList<Finalizer>();
+    finalizers = new ArrayList<>();
     finalizers.add(DataSourceRegistry.getInstance());
     internalIterator = finalizers.iterator();
   }

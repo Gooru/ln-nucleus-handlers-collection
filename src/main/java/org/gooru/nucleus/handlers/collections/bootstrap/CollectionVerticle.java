@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
  */
 public class CollectionVerticle extends AbstractVerticle {
 
-  static final Logger LOGGER = LoggerFactory.getLogger(CollectionVerticle.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(CollectionVerticle.class);
 
   @Override
   public void start(Future<Void> voidFuture) throws Exception {
