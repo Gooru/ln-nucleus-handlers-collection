@@ -2,6 +2,8 @@ package org.gooru.nucleus.handlers.collections.processors.repositories.activejdb
 
 import org.gooru.nucleus.handlers.collections.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.collections.processors.repositories.CollectionCollaboratorRepo;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbhandlers.DBHandlerBuilder;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.transactions.TransactionExecutor;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
 
 /**
@@ -16,13 +18,11 @@ public class AJCollectionCollaboratorRepo implements CollectionCollaboratorRepo 
 
   @Override
   public MessageResponse updateCollaborator() {
-    // TODO: Provide a concrete implementation
-    throw new IllegalStateException("Not implemented yet");
+    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildUpdateCollaboratorForCollection(context));
   }
 
   @Override
   public MessageResponse fetchCollaborator() {
-    // TODO: Provide a concrete implementation
-    throw new IllegalStateException("Not implemented yet");
+    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildFetchCollaboratorForCollection(context));
   }
 }

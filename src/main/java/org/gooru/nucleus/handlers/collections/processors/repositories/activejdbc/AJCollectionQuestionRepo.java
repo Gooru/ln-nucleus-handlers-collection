@@ -2,6 +2,8 @@ package org.gooru.nucleus.handlers.collections.processors.repositories.activejdb
 
 import org.gooru.nucleus.handlers.collections.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.collections.processors.repositories.CollectionQuestionRepo;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbhandlers.DBHandlerBuilder;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.transactions.TransactionExecutor;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
 
 /**
@@ -16,25 +18,21 @@ public class AJCollectionQuestionRepo implements CollectionQuestionRepo {
 
   @Override
   public MessageResponse updateQuestionInCollection() {
-    // TODO: Provide a concrete implementation
-    throw new IllegalStateException("Not implemented yet");
+    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildUpdateQuestionInCollectionHandler(context));
   }
 
   @Override
   public MessageResponse removeQuestionFromCollection() {
-    // TODO: Provide a concrete implementation
-    throw new IllegalStateException("Not implemented yet");
+    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildRemoveQuestionFromCollectionHandler(context));
   }
 
   @Override
   public MessageResponse addQuestionToCollection() {
-    // TODO: Provide a concrete implementation
-    throw new IllegalStateException("Not implemented yet");
+    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildAddQuestionToCollectionHandler(context));
   }
 
   @Override
   public MessageResponse copyQuestionToCollection() {
-    // TODO: Provide a concrete implementation
-    throw new IllegalStateException("Not implemented yet");
+    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildCopyQuestionToCollectionHandler(context));
   }
 }

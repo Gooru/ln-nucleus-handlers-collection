@@ -2,6 +2,8 @@ package org.gooru.nucleus.handlers.collections.processors.repositories.activejdb
 
 import org.gooru.nucleus.handlers.collections.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.collections.processors.repositories.CollectionRepo;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbhandlers.DBHandlerBuilder;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.transactions.TransactionExecutor;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
 
 /**
@@ -16,31 +18,26 @@ public class AJCollectionRepo implements CollectionRepo {
 
   @Override
   public MessageResponse deleteCollection() {
-    // TODO: Provide a concrete implementation
-    throw new IllegalStateException("Not implemented yet");
+    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildDeleteCollectionHandler(context));
   }
 
   @Override
   public MessageResponse updateCollection() {
-    // TODO: Provide a concrete implementation
-    throw new IllegalStateException("Not implemented yet");
+    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildUpdateCollectionHandler(context));
   }
 
   @Override
   public MessageResponse fetchCollection() {
-    // TODO: Provide a concrete implementation
-    throw new IllegalStateException("Not implemented yet");
+    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildFetchCollectionHandler(context));
   }
 
   @Override
   public MessageResponse createCollection() {
-    // TODO: Provide a concrete implementation
-    throw new IllegalStateException("Not implemented yet");
+    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildCreateCollectionHandler(context));
   }
 
   @Override
   public MessageResponse reorderContentInCollection() {
-    // TODO: Provide a concrete implementation
-    throw new IllegalStateException("Not implemented yet");
+    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildReorderContentInCollectionHandler(context));
   }
 }
