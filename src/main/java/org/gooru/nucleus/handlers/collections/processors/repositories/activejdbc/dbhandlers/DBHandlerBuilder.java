@@ -27,7 +27,7 @@ public class DBHandlerBuilder {
   }
 
   public DBHandler buildFetchCollaboratorForCollection(ProcessorContext context) {
-    return new FetchCollaboratorForCollection(context);
+    return new FetchCollaboratorHandler(context);
   }
 
   public DBHandler buildUpdateCollaboratorForCollection(ProcessorContext context) {
