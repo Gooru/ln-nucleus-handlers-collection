@@ -14,8 +14,8 @@ import org.slf4j.LoggerFactory;
  * Created by ashish on 12/1/16.
  */
 class FetchCollaboratorHandler implements DBHandler {
-  private final ProcessorContext context;
   private static final Logger LOGGER = LoggerFactory.getLogger(FetchCollaboratorHandler.class);
+  private final ProcessorContext context;
 
   public FetchCollaboratorHandler(ProcessorContext context) {
     this.context = context;

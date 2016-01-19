@@ -13,10 +13,10 @@ import org.slf4j.LoggerFactory;
 class MessageProcessor implements Processor {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class);
+  private final Message<Object> message;
   private String userId;
   private JsonObject prefs;
   private JsonObject request;
-  private final Message<Object> message;
 
   public MessageProcessor(Message<Object> message) {
     this.message = message;

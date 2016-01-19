@@ -19,8 +19,8 @@ import java.util.Map;
  * Created by ashish on 12/1/16.
  */
 class DeleteCollectionHandler implements DBHandler {
-  private final ProcessorContext context;
   private static final Logger LOGGER = LoggerFactory.getLogger(DeleteCollectionHandler.class);
+  private final ProcessorContext context;
 
   public DeleteCollectionHandler(ProcessorContext context) {
     this.context = context;
@@ -69,7 +69,8 @@ class DeleteCollectionHandler implements DBHandler {
       LOGGER.warn("Collection with id '{}' is published collection so should not be deleted", context.collectionId());
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("Collection is published"), ExecutionResult.ExecutionStatus.FAILED);
     }
-    return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);  }
+    return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
+  }
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
@@ -119,7 +120,8 @@ class DeleteCollectionHandler implements DBHandler {
     }
     return new ExecutionResult<>(
       MessageResponseFactory.createNoContentResponse("Deleted", EventBuilderFactory.getDeleteCollectionEventBuilder(context.collectionId())),
-      ExecutionResult.ExecutionStatus.SUCCESSFUL);  }
+      ExecutionResult.ExecutionStatus.SUCCESSFUL);
+  }
 
   @Override
   public boolean handlerReadOnly() {
