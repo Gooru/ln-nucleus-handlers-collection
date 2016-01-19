@@ -23,6 +23,17 @@ class FetchCollaboratorHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> checkSanity() {
+    // There should be an collection id present
+    if (context.collectionId() == null || context.collectionId().isEmpty()) {
+      LOGGER.warn("Missing collection id");
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Missing collection id"),
+        ExecutionResult.ExecutionStatus.FAILED);
+    }
+    return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
+  }
+
+  @Override
+  public ExecutionResult<MessageResponse> validateRequest() {
     // Fetch the collection where type is collection and it is not deleted already and id is specified id
 
     LazyList<AJEntityCollection> collections = AJEntityCollection
@@ -36,12 +47,6 @@ class FetchCollaboratorHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("collection id: " + context.collectionId()),
         ExecutionResult.ExecutionStatus.FAILED);
     }
-    return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
-  }
-
-  @Override
-  public ExecutionResult<MessageResponse> validateRequest() {
-    // Nothing to validate, so we are all set
     return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
   }
 
