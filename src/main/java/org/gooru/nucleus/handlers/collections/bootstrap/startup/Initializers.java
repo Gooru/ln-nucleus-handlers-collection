@@ -9,11 +9,10 @@ import java.util.List;
 public class Initializers implements Iterable<Initializer> {
 
 
-  private List<Initializer> initializers = null;
   private final Iterator<Initializer> internalIterator;
 
   public Initializers() {
-    initializers = new ArrayList<>();
+    List<Initializer> initializers = new ArrayList<>();
     initializers.add(DataSourceRegistry.getInstance());
     internalIterator = initializers.iterator();
   }

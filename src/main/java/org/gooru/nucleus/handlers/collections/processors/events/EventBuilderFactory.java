@@ -16,38 +16,18 @@ public class EventBuilderFactory {
   private static final String COLLECTION_ID = "id";
 
   public static EventBuilder getDeleteCollectionEventBuilder(String collectionId) {
-    return new EventBuilder() {
-      @Override
-      public JsonObject build() {
-        return new JsonObject().put(EVENT_NAME, EVT_COLLECTION_DELETE).put(EVENT_BODY, new JsonObject().put(COLLECTION_ID, collectionId));
-      }
-    };
+    return () -> new JsonObject().put(EVENT_NAME, EVT_COLLECTION_DELETE).put(EVENT_BODY, new JsonObject().put(COLLECTION_ID, collectionId));
   }
 
   public static EventBuilder getCreateCollectionEventBuilder(String collectionId) {
-    return new EventBuilder() {
-      @Override
-      public JsonObject build() {
-        return new JsonObject().put(EVENT_NAME, EVT_COLLECTION_CREATE).put(EVENT_BODY, new JsonObject().put(COLLECTION_ID, collectionId));
-      }
-    };
+    return () -> new JsonObject().put(EVENT_NAME, EVT_COLLECTION_CREATE).put(EVENT_BODY, new JsonObject().put(COLLECTION_ID, collectionId));
   }
 
   public static EventBuilder getUpdateCollectionEventBuilder(String collectionId) {
-    return new EventBuilder() {
-      @Override
-      public JsonObject build() {
-        return new JsonObject().put(EVENT_NAME, EVT_COLLECTION_UPDATE).put(EVENT_BODY, new JsonObject().put(COLLECTION_ID, collectionId));
-      }
-    };
+    return () -> new JsonObject().put(EVENT_NAME, EVT_COLLECTION_UPDATE).put(EVENT_BODY, new JsonObject().put(COLLECTION_ID, collectionId));
   }
 
   public static EventBuilder getCopyCollectionEventBuilder(String collectionId) {
-    return new EventBuilder() {
-      @Override
-      public JsonObject build() {
-        return new JsonObject().put(EVENT_NAME, EVT_COLLECTION_COPY).put(EVENT_BODY, new JsonObject().put(COLLECTION_ID, collectionId));
-      }
-    };
+    return () -> new JsonObject().put(EVENT_NAME, EVT_COLLECTION_COPY).put(EVENT_BODY, new JsonObject().put(COLLECTION_ID, collectionId));
   }
 }
