@@ -59,7 +59,6 @@ class SimpleJsonFormatter implements JsonFormatter {
       } else if (v instanceof Date) {
         sb.append('"').append(Convert.toIsoString((Date) v)).append('"');
       } else if (v instanceof PGobject && ((PGobject) v).getType().equalsIgnoreCase("jsonb")) {
-        System.out.println("Handling the PGObject");
         sb.append(Convert.toString(v));
       } else {
         sb.append('"');
