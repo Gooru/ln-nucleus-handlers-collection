@@ -3,6 +3,7 @@ package org.gooru.nucleus.handlers.collections.processors.repositories.activejdb
 import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.collections.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityCollection;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.formatter.JsonFormatterBuilder;
 import org.gooru.nucleus.handlers.collections.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponseFactory;
@@ -66,7 +67,7 @@ class FetchCollaboratorHandler implements DBHandler {
         ExecutionResult.ExecutionStatus.FAILED);
     } else {
       AJEntityCollection collection = collections.get(0);
-      String response = collection.toJson(false, AJEntityCollection.COLLABORATOR);
+      String response = new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityCollection.COLLABORATOR_FIELD_LIST).toJson(collection);
       return new ExecutionResult<>(MessageResponseFactory.createOkayResponse(new JsonObject(response)), ExecutionResult.ExecutionStatus.SUCCESSFUL);
     }
   }

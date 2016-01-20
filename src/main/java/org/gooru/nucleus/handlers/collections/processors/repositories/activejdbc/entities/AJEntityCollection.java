@@ -3,6 +3,9 @@ package org.gooru.nucleus.handlers.collections.processors.repositories.activejdb
 import org.javalite.activejdbc.Model;
 import org.javalite.activejdbc.annotations.Table;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Created by ashish on 11/1/16.
  */
@@ -19,4 +22,5 @@ public class AJEntityCollection extends Model {
   public static final String IS_DELETED = "is_deleted";
   public static final String MODIFIER_ID = "modifier_id";
   public static final String COLLABORATOR = "collaborator";
+  public static final List<String> COLLABORATOR_FIELD_LIST = Arrays.asList(COLLABORATOR);
 }
