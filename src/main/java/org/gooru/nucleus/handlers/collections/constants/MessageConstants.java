@@ -25,16 +25,9 @@ public class MessageConstants {
   public static final String MSG_OP_COLLECTION_CREATE = "collection.create";
   public static final String MSG_OP_COLLECTION_UPDATE = "collection.update";
   public static final String MSG_OP_COLLECTION_DELETE = "collection.delete";
-  public static final String MSG_OP_COLLECTION_COLLABORATOR_GET = "collection.collaborator.get.";
   public static final String MSG_OP_COLLECTION_COLLABORATOR_UPDATE = "collection..collaborator.update";
-  public static final String MSG_OP_COLLECTION_QUESTION_REMOVE = "collection.question.remove";
   public static final String MSG_OP_COLLECTION_QUESTION_ADD = "collection.question.add";
-  public static final String MSG_OP_COLLECTION_QUESTION_UPDATE = "collection.question.update";
-  public static final String MSG_OP_COLLECTION_QUESTION_COPY = "collection.question.copy";
   public static final String MSG_OP_COLLECTION_CONTENT_REORDER = "collection.question.reorder";
-  public static final String MSG_OP_COLLECTION_RESOURCE_UPDATE = "collection.resource.update";
-  public static final String MSG_OP_COLLECTION_RESOURCE_COPY = "collection.resource.copy";
-  public static final String MSG_OP_COLLECTION_RESOURCE_REMOVE = "collection.resource.remove";
   public static final String MSG_OP_COLLECTION_RESOURCE_ADD = "collection.resource.add";
 
   // Containers for different responses

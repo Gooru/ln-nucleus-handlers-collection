@@ -42,8 +42,7 @@ public class MessageResponseFactory {
   }
 
   public static MessageResponse createValidationErrorResponse(JsonObject errors) {
-    return new MessageResponse.Builder().validationFailed().setStatusBadRequest().setResponseBody(errors)
-                                        .build();
+    return new MessageResponse.Builder().validationFailed().setStatusBadRequest().setResponseBody(errors).build();
 
   }
 

@@ -40,4 +40,19 @@ public class AJCollectionRepo implements CollectionRepo {
   public MessageResponse reorderContentInCollection() {
     return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildReorderContentInCollectionHandler(context));
   }
+
+  @Override
+  public MessageResponse updateCollaborator() {
+    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildUpdateCollaboratorForCollection(context));
+  }
+
+  @Override
+  public MessageResponse addQuestionToCollection() {
+    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildAddQuestionToCollectionHandler(context));
+  }
+
+  @Override
+  public MessageResponse addResourceToCollection() {
+    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildAddResourceToCollectionHandler(context));
+  }
 }

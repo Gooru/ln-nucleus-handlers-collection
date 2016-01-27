@@ -15,4 +15,11 @@ public interface CollectionRepo {
   MessageResponse createCollection();
 
   MessageResponse reorderContentInCollection();
+
+  MessageResponse updateCollaborator();
+
+  MessageResponse addQuestionToCollection();
+
+  MessageResponse addResourceToCollection();
+
 }

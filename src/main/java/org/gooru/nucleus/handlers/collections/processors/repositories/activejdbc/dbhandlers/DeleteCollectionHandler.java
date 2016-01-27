@@ -47,11 +47,8 @@ class DeleteCollectionHandler implements DBHandler {
   public ExecutionResult<MessageResponse> validateRequest() {
     // Fetch the assessment where type is assessment and it is not deleted already and id is specified id
 
-    LazyList<AJEntityCollection> collections = AJEntityCollection
-      .findBySQL(
-        AJEntityCollection.SELECT_FOR_VALIDATE,
-        AJEntityCollection.COLLECTION,
-        context.collectionId(), false);
+    LazyList<AJEntityCollection> collections =
+      AJEntityCollection.findBySQL(AJEntityCollection.SELECT_FOR_VALIDATE, AJEntityCollection.COLLECTION, context.collectionId(), false);
     // Collection should be present in DB
     if (collections.size() < 1) {
       LOGGER.warn("Collection id: {} not present in DB", context.collectionId());
@@ -92,9 +89,7 @@ class DeleteCollectionHandler implements DBHandler {
     }
     // If the collection is present in CULC table, we do similar thing there, except for modifier_id as this field is not needed in CULC entity
 
-    LazyList<AJEntityCULC> culcToDeleteList = AJEntityCULC.findBySQL(
-      AJEntityCULC.SELECT_FOR_DELETE,
-      context.collectionId(), false);
+    LazyList<AJEntityCULC> culcToDeleteList = AJEntityCULC.findBySQL(AJEntityCULC.SELECT_FOR_DELETE, context.collectionId(), false);
     int numberOfEntries = culcToDeleteList.size();
     if (numberOfEntries == 1) {
       AJEntityCULC entityCULC = culcToDeleteList.get(0);

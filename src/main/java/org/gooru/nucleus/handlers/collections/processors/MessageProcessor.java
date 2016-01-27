@@ -49,32 +49,11 @@ class MessageProcessor implements Processor {
         case MessageConstants.MSG_OP_COLLECTION_QUESTION_ADD:
           result = processCollectionAddQuestion();
           break;
-        case MessageConstants.MSG_OP_COLLECTION_QUESTION_UPDATE:
-          result = processCollectionUpdateQuestion();
-          break;
-        case MessageConstants.MSG_OP_COLLECTION_QUESTION_REMOVE:
-          result = processCollectionRemoveQuestion();
-          break;
-        case MessageConstants.MSG_OP_COLLECTION_QUESTION_COPY:
-          result = processCollectionCopyQuestion();
-          break;
         case MessageConstants.MSG_OP_COLLECTION_RESOURCE_ADD:
           result = processCollectionAddResource();
           break;
-        case MessageConstants.MSG_OP_COLLECTION_RESOURCE_UPDATE:
-          result = processCollectionUpdateResource();
-          break;
-        case MessageConstants.MSG_OP_COLLECTION_RESOURCE_REMOVE:
-          result = processCollectionRemoveResource();
-          break;
-        case MessageConstants.MSG_OP_COLLECTION_RESOURCE_COPY:
-          result = processCollectionCopyResource();
-          break;
         case MessageConstants.MSG_OP_COLLECTION_CONTENT_REORDER:
           result = processCollectionContentReorder();
-          break;
-        case MessageConstants.MSG_OP_COLLECTION_COLLABORATOR_GET:
-          result = processCollectionCollaboratorGet();
           break;
         case MessageConstants.MSG_OP_COLLECTION_COLLABORATOR_UPDATE:
           result = processCollectionCollaboratorUpdate();
@@ -90,61 +69,13 @@ class MessageProcessor implements Processor {
     }
   }
 
-  private MessageResponse processCollectionUpdateResource() {
-    ProcessorContext context = createContext();
-    if (context.collectionId() == null || context.collectionId().isEmpty() || context.resourceId() == null || context.questionId().isEmpty()) {
-      LOGGER.error("Invalid request, either collection id or resource id not available. Aborting");
-      return MessageResponseFactory.createInvalidRequestResponse("Invalid collection/resource id");
-    }
-
-    return new RepoBuilder().buildCollectionResourceRepo(context).updateResourceInCollection();
-  }
-
-  private MessageResponse processCollectionRemoveResource() {
-    ProcessorContext context = createContext();
-    if (context.collectionId() == null || context.collectionId().isEmpty() || context.resourceId() == null || context.questionId().isEmpty()) {
-      LOGGER.error("Invalid request, either collection id or resource id not available. Aborting");
-      return MessageResponseFactory.createInvalidRequestResponse("Invalid collection/resource id");
-    }
-    return new RepoBuilder().buildCollectionResourceRepo(context).removeResourceFromCollection();
-  }
-
   private MessageResponse processCollectionAddResource() {
     ProcessorContext context = createContext();
     if (context.collectionId() == null || context.collectionId().isEmpty()) {
       LOGGER.error("Invalid request, collection id not available. Aborting");
       return MessageResponseFactory.createInvalidRequestResponse("Invalid collection id");
     }
-    return new RepoBuilder().buildCollectionResourceRepo(context).addResourceToCollection();
-  }
-
-  private MessageResponse processCollectionCopyResource() {
-    ProcessorContext context = createContext();
-    if (context.collectionId() == null || context.collectionId().isEmpty()) {
-      LOGGER.error("Invalid request, collection id not available. Aborting");
-      return MessageResponseFactory.createInvalidRequestResponse("Invalid collection id");
-    }
-    return new RepoBuilder().buildCollectionResourceRepo(context).copyResourceToCollection();
-  }
-
-
-  private MessageResponse processCollectionUpdateQuestion() {
-    ProcessorContext context = createContext();
-    if (context.collectionId() == null || context.collectionId().isEmpty() || context.questionId() == null || context.questionId().isEmpty()) {
-      LOGGER.error("Invalid request, either collection id or question id not available. Aborting");
-      return MessageResponseFactory.createInvalidRequestResponse("Invalid collection/question id");
-    }
-
-    return new RepoBuilder().buildCollectionQuestionRepo(context).updateQuestionInCollection();
-  }
-
-  private MessageResponse processCollectionRemoveQuestion() {
-    ProcessorContext context = createContext();
-    if (context.collectionId() == null || context.collectionId().isEmpty() || context.questionId() == null || context.questionId().isEmpty()) {
-      LOGGER.error("Invalid request, either collection id or question id not available. Aborting");
-      return MessageResponseFactory.createInvalidRequestResponse("Invalid collection/question id");
-    }
-    return new RepoBuilder().buildCollectionQuestionRepo(context).removeQuestionFromCollection();
+    return new RepoBuilder().buildCollectionRepo(context).addResourceToCollection();
   }
 
   private MessageResponse processCollectionAddQuestion() {
@@ -153,16 +84,7 @@ class MessageProcessor implements Processor {
       LOGGER.error("Invalid request, collection id not available. Aborting");
       return MessageResponseFactory.createInvalidRequestResponse("Invalid collection id");
     }
-    return new RepoBuilder().buildCollectionQuestionRepo(context).addQuestionToCollection();
-  }
-
-  private MessageResponse processCollectionCopyQuestion() {
-    ProcessorContext context = createContext();
-    if (context.collectionId() == null || context.collectionId().isEmpty()) {
-      LOGGER.error("Invalid request, collection id not available. Aborting");
-      return MessageResponseFactory.createInvalidRequestResponse("Invalid collection id");
-    }
-    return new RepoBuilder().buildCollectionQuestionRepo(context).copyQuestionToCollection();
+    return new RepoBuilder().buildCollectionRepo(context).addQuestionToCollection();
   }
 
   private MessageResponse processCollectionContentReorder() {
@@ -181,17 +103,9 @@ class MessageProcessor implements Processor {
       LOGGER.error("Invalid request, collection id not available. Aborting");
       return MessageResponseFactory.createInvalidRequestResponse("Invalid collection id");
     }
-    return new RepoBuilder().buildCollectionCollaboratorRepo(context).updateCollaborator();
+    return new RepoBuilder().buildCollectionRepo(context).updateCollaborator();
   }
 
-  private MessageResponse processCollectionCollaboratorGet() {
-    ProcessorContext context = createContext();
-    if (context.collectionId() == null || context.collectionId().isEmpty()) {
-      LOGGER.error("Invalid request, collection id not available. Aborting");
-      return MessageResponseFactory.createInvalidRequestResponse("Invalid collection id");
-    }
-    return new RepoBuilder().buildCollectionCollaboratorRepo(context).fetchCollaborator();
-  }
 
   private MessageResponse processCollectionDelete() {
     ProcessorContext context = createContext();
