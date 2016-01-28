@@ -4,7 +4,6 @@ import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.collections.constants.MessageConstants;
 import org.gooru.nucleus.handlers.collections.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.collections.processors.events.EventBuilderFactory;
-import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityCULC;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityCollection;
 import org.gooru.nucleus.handlers.collections.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
@@ -87,33 +86,7 @@ class DeleteCollectionHandler implements DBHandler {
         return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionResult.ExecutionStatus.FAILED);
       }
     }
-    // If the collection is present in CULC table, we do similar thing there, except for modifier_id as this field is not needed in CULC entity
 
-    LazyList<AJEntityCULC> culcToDeleteList = AJEntityCULC.findBySQL(AJEntityCULC.SELECT_FOR_DELETE, context.collectionId(), false);
-    int numberOfEntries = culcToDeleteList.size();
-    if (numberOfEntries == 1) {
-      AJEntityCULC entityCULC = culcToDeleteList.get(0);
-      // We have a record and we have to delete it
-      entityCULC.setBoolean("is_deleted", true);
-      result = collectionToDelete.save();
-      if (!result) {
-        LOGGER.error("Failed to delete CULC record for collection '{}'", context.collectionId());
-        if (entityCULC.hasErrors()) {
-          Map<String, String> map = entityCULC.errors();
-          JsonObject errors = new JsonObject();
-          map.forEach(errors::put);
-          return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionResult.ExecutionStatus.FAILED);
-        }
-      }
-    } else if (numberOfEntries > 1) {
-      // There are multiple records. Not sure which one we want to delete
-      LOGGER.error("Multiple CULC record for collection '{}'", context.collectionId());
-      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Multiple child records found. Cannot delete"),
-        ExecutionResult.ExecutionStatus.FAILED);
-    } else {
-      // Nothing to do. We do not have a live record.
-      LOGGER.debug("No record in CULC for collection '{}' to be deleted", context.collectionId());
-    }
     return new ExecutionResult<>(
       MessageResponseFactory.createNoContentResponse("Deleted", EventBuilderFactory.getDeleteCollectionEventBuilder(context.collectionId())),
       ExecutionResult.ExecutionStatus.SUCCESSFUL);
