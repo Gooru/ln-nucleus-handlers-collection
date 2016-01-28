@@ -10,6 +10,8 @@ import org.gooru.nucleus.handlers.collections.processors.responses.MessageRespon
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.UUID;
+
 class MessageProcessor implements Processor {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class);
@@ -71,8 +73,7 @@ class MessageProcessor implements Processor {
 
   private MessageResponse processCollectionAddResource() {
     ProcessorContext context = createContext();
-    if (context.collectionId() == null || context.collectionId().isEmpty()) {
-      LOGGER.error("Invalid request, collection id not available. Aborting");
+    if (validateContext(context, false, true)) {
       return MessageResponseFactory.createInvalidRequestResponse("Invalid collection id");
     }
     return new RepoBuilder().buildCollectionRepo(context).addResourceToCollection();
@@ -80,8 +81,7 @@ class MessageProcessor implements Processor {
 
   private MessageResponse processCollectionAddQuestion() {
     ProcessorContext context = createContext();
-    if (context.collectionId() == null || context.collectionId().isEmpty()) {
-      LOGGER.error("Invalid request, collection id not available. Aborting");
+    if (validateContext(context, true, false)) {
       return MessageResponseFactory.createInvalidRequestResponse("Invalid collection id");
     }
     return new RepoBuilder().buildCollectionRepo(context).addQuestionToCollection();
@@ -89,8 +89,7 @@ class MessageProcessor implements Processor {
 
   private MessageResponse processCollectionContentReorder() {
     ProcessorContext context = createContext();
-    if (context.collectionId() == null || context.collectionId().isEmpty()) {
-      LOGGER.error("Invalid request, collection id not available. Aborting");
+    if (validateContext(context)) {
       return MessageResponseFactory.createInvalidRequestResponse("Invalid collection id");
 
     }
@@ -99,8 +98,7 @@ class MessageProcessor implements Processor {
 
   private MessageResponse processCollectionCollaboratorUpdate() {
     ProcessorContext context = createContext();
-    if (context.collectionId() == null || context.collectionId().isEmpty()) {
-      LOGGER.error("Invalid request, collection id not available. Aborting");
+    if (validateContext(context)) {
       return MessageResponseFactory.createInvalidRequestResponse("Invalid collection id");
     }
     return new RepoBuilder().buildCollectionRepo(context).updateCollaborator();
@@ -109,8 +107,7 @@ class MessageProcessor implements Processor {
 
   private MessageResponse processCollectionDelete() {
     ProcessorContext context = createContext();
-    if (context.collectionId() == null || context.collectionId().isEmpty()) {
-      LOGGER.error("Invalid request, collection id not available. Aborting");
+    if (validateContext(context)) {
       return MessageResponseFactory.createInvalidRequestResponse("Invalid collection id");
     }
     return new RepoBuilder().buildCollectionRepo(context).deleteCollection();
@@ -118,8 +115,7 @@ class MessageProcessor implements Processor {
 
   private MessageResponse processCollectionUpdate() {
     ProcessorContext context = createContext();
-    if (context.collectionId() == null || context.collectionId().isEmpty()) {
-      LOGGER.error("Invalid request, collection id not available. Aborting");
+    if (validateContext(context)) {
       return MessageResponseFactory.createInvalidRequestResponse("Invalid collection id");
     }
     return new RepoBuilder().buildCollectionRepo(context).updateCollection();
@@ -127,8 +123,7 @@ class MessageProcessor implements Processor {
 
   private MessageResponse processCollectionGet() {
     ProcessorContext context = createContext();
-    if (context.collectionId() == null || context.collectionId().isEmpty()) {
-      LOGGER.error("Invalid request, collection id not available. Aborting");
+    if (validateContext(context)) {
       return MessageResponseFactory.createInvalidRequestResponse("Invalid collection id");
     }
     return new RepoBuilder().buildCollectionRepo(context).fetchCollection();
@@ -155,10 +150,11 @@ class MessageProcessor implements Processor {
     }
 
     userId = ((JsonObject) message.body()).getString(MessageConstants.MSG_USER_ID);
-    if (userId == null) {
+    if (!validateUser(userId)) {
       LOGGER.error("Invalid user id passed. Not authorized.");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionResult.ExecutionStatus.FAILED);
     }
+
     prefs = ((JsonObject) message.body()).getJsonObject(MessageConstants.MSG_KEY_PREFS);
     request = ((JsonObject) message.body()).getJsonObject(MessageConstants.MSG_HTTP_BODY);
 
@@ -176,5 +172,57 @@ class MessageProcessor implements Processor {
     return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
   }
 
+
+  private boolean validateContext(ProcessorContext context) {
+    return validateContext(context, false, false);
+  }
+
+  private boolean validateContext(ProcessorContext context, boolean shouldHaveQuestion, boolean shouldHaveResource) {
+    if (!validateId(context.collectionId())) {
+      LOGGER.error("Invalid request, assessment id not available/incorrect format. Aborting");
+      return false;
+    }
+    if (shouldHaveQuestion) {
+      if (!validateId(context.questionId())) {
+        LOGGER.error("Invalid request, question id not available/incorrect format. Aborting");
+        return false;
+      }
+    }
+    if (shouldHaveResource) {
+      if (!validateId(context.questionId())) {
+        LOGGER.error("Invalid request, resource id not available/incorrect format. Aborting");
+        return false;
+      }
+    }    return true;
+  }
+
+  private boolean validateUser(String userId) {
+    if (userId == null || userId.isEmpty()) {
+      return false;
+    } else if (userId.equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
+      return true;
+    } else {
+      return validateUuid(userId);
+    }
+  }
+
+  private boolean validateId(String id) {
+    if (id == null || id.isEmpty()) {
+      return false;
+    } else {
+      return validateUuid(userId);
+    }
+  }
+
+  private boolean validateUuid(String uuidString) {
+    try {
+      UUID uuid = UUID.fromString(uuidString);
+      return true;
+    } catch (IllegalArgumentException e) {
+      return false;
+    } catch (Exception e) {
+      return false;
+    }
+  }
 
 }
