@@ -23,6 +23,7 @@ class CreateCollectionHandler implements DBHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(CreateCollectionHandler.class);
   private final ProcessorContext context;
   private AJEntityCollection collection;
+
   public CreateCollectionHandler(ProcessorContext context) {
     this.context = context;
   }

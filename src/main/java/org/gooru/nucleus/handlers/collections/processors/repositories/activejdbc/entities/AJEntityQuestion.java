@@ -1,15 +1,10 @@
 package org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities;
 
-import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.converters.ConverterRegistry;
-import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.converters.FieldConverter;
-import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.validators.FieldSelector;
-import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.validators.FieldValidator;
-import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.validators.ReorderFieldValidator;
-import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.validators.ValidatorRegistry;
 import org.javalite.activejdbc.Model;
 import org.javalite.activejdbc.annotations.Table;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by ashish on 11/1/16.

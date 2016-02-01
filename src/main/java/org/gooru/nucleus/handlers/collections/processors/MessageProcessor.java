@@ -208,7 +208,8 @@ class MessageProcessor implements Processor {
         LOGGER.error("Invalid request, resource id not available/incorrect format. Aborting");
         return false;
       }
-    }    return true;
+    }
+    return true;
   }
 
   private boolean validateUser(String userId) {
