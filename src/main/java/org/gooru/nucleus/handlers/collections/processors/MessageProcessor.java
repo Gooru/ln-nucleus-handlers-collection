@@ -71,43 +71,41 @@ class MessageProcessor implements Processor {
     }
   }
 
-  private MessageResponse processCollectionAddResource() {
-    ProcessorContext context = createContext();
-    if (validateContext(context, false, true)) {
-      return MessageResponseFactory.createInvalidRequestResponse("Invalid collection id");
-    }
-    return new RepoBuilder().buildCollectionRepo(context).addResourceToCollection();
-  }
-
-  private MessageResponse processCollectionAddQuestion() {
-    ProcessorContext context = createContext();
-    if (validateContext(context, true, false)) {
-      return MessageResponseFactory.createInvalidRequestResponse("Invalid collection id");
-    }
-    return new RepoBuilder().buildCollectionRepo(context).addQuestionToCollection();
-  }
-
   private MessageResponse processCollectionContentReorder() {
     ProcessorContext context = createContext();
-    if (validateContext(context)) {
+    if (!validateContext(context)) {
       return MessageResponseFactory.createInvalidRequestResponse("Invalid collection id");
-
     }
     return new RepoBuilder().buildCollectionRepo(context).reorderContentInCollection();
   }
 
   private MessageResponse processCollectionCollaboratorUpdate() {
     ProcessorContext context = createContext();
-    if (validateContext(context)) {
+    if (!validateContext(context)) {
       return MessageResponseFactory.createInvalidRequestResponse("Invalid collection id");
     }
     return new RepoBuilder().buildCollectionRepo(context).updateCollaborator();
   }
 
+  private MessageResponse processCollectionAddQuestion() {
+    ProcessorContext context = createContextWithQuestion();
+    if (!validateContextWithQuestion(context)) {
+      return MessageResponseFactory.createInvalidRequestResponse("Invalid collection/question id");
+    }
+    return new RepoBuilder().buildCollectionRepo(context).addQuestionToCollection();
+  }
+
+  private MessageResponse processCollectionAddResource() {
+    ProcessorContext context = createContextWithResource();
+    if (!validateContextWithResource(context)) {
+      return MessageResponseFactory.createInvalidRequestResponse("Invalid collection/resource id");
+    }
+    return new RepoBuilder().buildCollectionRepo(context).addResourceToCollection();
+  }
 
   private MessageResponse processCollectionDelete() {
     ProcessorContext context = createContext();
-    if (validateContext(context)) {
+    if (!validateContext(context)) {
       return MessageResponseFactory.createInvalidRequestResponse("Invalid collection id");
     }
     return new RepoBuilder().buildCollectionRepo(context).deleteCollection();
@@ -115,7 +113,7 @@ class MessageProcessor implements Processor {
 
   private MessageResponse processCollectionUpdate() {
     ProcessorContext context = createContext();
-    if (validateContext(context)) {
+    if (!validateContext(context)) {
       return MessageResponseFactory.createInvalidRequestResponse("Invalid collection id");
     }
     return new RepoBuilder().buildCollectionRepo(context).updateCollection();
@@ -123,7 +121,7 @@ class MessageProcessor implements Processor {
 
   private MessageResponse processCollectionGet() {
     ProcessorContext context = createContext();
-    if (validateContext(context)) {
+    if (!validateContext(context)) {
       return MessageResponseFactory.createInvalidRequestResponse("Invalid collection id");
     }
     return new RepoBuilder().buildCollectionRepo(context).fetchCollection();
@@ -137,10 +135,19 @@ class MessageProcessor implements Processor {
 
   private ProcessorContext createContext() {
     String collectionId = message.headers().get(MessageConstants.COLLECTION_ID);
-    String questionId = message.headers().get(MessageConstants.QUESTION_ID);
-    String resourceId = message.headers().get(MessageConstants.RESOURCE_ID);
+    return new ProcessorContext(userId, prefs, request, collectionId, null, null);
+  }
 
-    return new ProcessorContext(userId, prefs, request, collectionId, questionId, resourceId);
+  private ProcessorContext createContextWithQuestion() {
+    String collectionId = message.headers().get(MessageConstants.COLLECTION_ID);
+    String questionId = message.headers().get(MessageConstants.QUESTION_ID);
+    return new ProcessorContext(userId, prefs, request, collectionId, questionId, null);
+  }
+
+  private ProcessorContext createContextWithResource() {
+    String collectionId = message.headers().get(MessageConstants.COLLECTION_ID);
+    String resourceId = message.headers().get(MessageConstants.RESOURCE_ID);
+    return new ProcessorContext(userId, prefs, request, collectionId, null, resourceId);
   }
 
   private ExecutionResult<MessageResponse> validateAndInitialize() {
@@ -177,6 +184,14 @@ class MessageProcessor implements Processor {
     return validateContext(context, false, false);
   }
 
+  private boolean validateContextWithQuestion(ProcessorContext context) {
+    return validateContext(context, true, false);
+  }
+
+  private boolean validateContextWithResource(ProcessorContext context) {
+    return validateContext(context, false, true);
+  }
+
   private boolean validateContext(ProcessorContext context, boolean shouldHaveQuestion, boolean shouldHaveResource) {
     if (!validateId(context.collectionId())) {
       LOGGER.error("Invalid request, assessment id not available/incorrect format. Aborting");
@@ -197,21 +212,11 @@ class MessageProcessor implements Processor {
   }
 
   private boolean validateUser(String userId) {
-    if (userId == null || userId.isEmpty()) {
-      return false;
-    } else if (userId.equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
-      return true;
-    } else {
-      return validateUuid(userId);
-    }
+    return !(userId == null || userId.isEmpty()) && (userId.equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS) || validateUuid(userId));
   }
 
   private boolean validateId(String id) {
-    if (id == null || id.isEmpty()) {
-      return false;
-    } else {
-      return validateUuid(userId);
-    }
+    return !(id == null || id.isEmpty()) && validateUuid(id);
   }
 
   private boolean validateUuid(String uuidString) {

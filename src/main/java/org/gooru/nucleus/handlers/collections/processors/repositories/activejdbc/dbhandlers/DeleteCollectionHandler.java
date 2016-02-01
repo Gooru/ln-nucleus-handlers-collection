@@ -4,10 +4,14 @@ import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.collections.constants.MessageConstants;
 import org.gooru.nucleus.handlers.collections.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.collections.processors.events.EventBuilderFactory;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityCollection;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityQuestion;
 import org.gooru.nucleus.handlers.collections.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponseFactory;
+import org.javalite.activejdbc.Base;
+import org.javalite.activejdbc.DBException;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,11 +31,10 @@ class DeleteCollectionHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> checkSanity() {
-    // There should be an assessment id present
+    // There should be an collection id present
     if (context.collectionId() == null || context.collectionId().isEmpty()) {
       LOGGER.warn("Missing collection id");
-      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Missing collection id"),
-        ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Missing collection id"), ExecutionResult.ExecutionStatus.FAILED);
     }
     // The user should not be anonymous
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
@@ -40,14 +43,15 @@ class DeleteCollectionHandler implements DBHandler {
     }
 
     return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
+
   }
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    // Fetch the assessment where type is assessment and it is not deleted already and id is specified id
+    // Fetch the collection where type is collection and it is not deleted already and id is specified id
 
     LazyList<AJEntityCollection> collections =
-      AJEntityCollection.findBySQL(AJEntityCollection.SELECT_FOR_VALIDATE, AJEntityCollection.COLLECTION, context.collectionId(), false);
+      AJEntityCollection.findBySQL(AJEntityCollection.AUTHORIZER_QUERY, AJEntityCollection.COLLECTION, context.collectionId(), false);
     // Collection should be present in DB
     if (collections.size() < 1) {
       LOGGER.warn("Collection id: {} not present in DB", context.collectionId());
@@ -55,27 +59,22 @@ class DeleteCollectionHandler implements DBHandler {
         ExecutionResult.ExecutionStatus.FAILED);
     }
     AJEntityCollection collection = collections.get(0);
-    // The user should be owner of the assessment, collaborator will not do
-    // FIXME: 21/1/16 : Need to verify if the user is part of collaborator or owner of course where this collection may be contained
-    if (!(collection.getString(AJEntityCollection.CREATOR_ID)).equalsIgnoreCase(context.userId())) {
-      LOGGER.warn("User: '{}' is not owner of collection", context.userId());
-      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("Not allowed"), ExecutionResult.ExecutionStatus.FAILED);
-    }
     // This should not be published
     if (collection.getDate(AJEntityCollection.PUBLISH_DATE) != null) {
       LOGGER.warn("Collection with id '{}' is published collection so should not be deleted", context.collectionId());
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("Collection is published"), ExecutionResult.ExecutionStatus.FAILED);
     }
-    return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
+    return new AuthorizerBuilder().buildDeleteAuthorizer(this.context).authorize(collection);
   }
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
-    // Update assessment, we need to set the deleted flag and user who is deleting it but We do not reset the sequence id right now
+    // Update collection, we need to set the deleted flag and user who is deleting it but We do not reset the sequence id right now
     AJEntityCollection collectionToDelete = new AJEntityCollection();
     collectionToDelete.setId(context.collectionId());
     collectionToDelete.setBoolean(AJEntityCollection.IS_DELETED, true);
-    collectionToDelete.setString(AJEntityCollection.MODIFIER_ID, context.userId());
+    collectionToDelete.setModifierId(context.userId());
+
     boolean result = collectionToDelete.save();
     if (!result) {
       LOGGER.error("Collection with id '{}' failed to delete", context.collectionId());
@@ -86,7 +85,10 @@ class DeleteCollectionHandler implements DBHandler {
         return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionResult.ExecutionStatus.FAILED);
       }
     }
-
+    if (!deleteContents()) {
+      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Not able to delete questions"),
+        ExecutionResult.ExecutionStatus.FAILED);
+    }
     return new ExecutionResult<>(
       MessageResponseFactory.createNoContentResponse("Deleted", EventBuilderFactory.getDeleteCollectionEventBuilder(context.collectionId())),
       ExecutionResult.ExecutionStatus.SUCCESSFUL);
@@ -94,6 +96,19 @@ class DeleteCollectionHandler implements DBHandler {
 
   @Override
   public boolean handlerReadOnly() {
+    // This operation is not read only and so is transaction
     return false;
   }
+
+  private boolean deleteContents() {
+    try {
+      long deletedContentCount = Base.exec(AJEntityQuestion.DELETE_CONTENTS_QUERY, this.context.userId(), this.context.collectionId());
+      LOGGER.info("Collection '{}' deleted along with '{}' questions", context.collectionId(), deletedContentCount);
+      return true;
+    } catch (DBException e) {
+      LOGGER.error("Error deleting questions for Collection '{}'", context.collectionId(), e);
+      return false;
+    }
+  }
+
 }

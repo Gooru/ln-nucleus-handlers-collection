@@ -1,5 +1,6 @@
 package org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.formatter;
 
+import org.javalite.activejdbc.LazyList;
 import org.javalite.activejdbc.Model;
 import org.javalite.activejdbc.ModelDelegate;
 import org.javalite.common.Convert;
@@ -29,6 +30,38 @@ class SimpleJsonFormatter implements JsonFormatter {
   public <T extends Model> String toJson(T model) {
     StringBuilder sb = new StringBuilder();
     String indent = "";
+    modelToJson(model, sb, indent);
+    return sb.toString();
+  }
+
+
+  @Override
+  public <T extends Model> String toJson(LazyList<T> modelList) {
+    StringBuilder sb = new StringBuilder();
+    sb.append('[');
+    if (pretty) {
+      sb.append('\n');
+    }
+
+    for (int i = 0; i < modelList.size(); i++) {
+      if (i > 0) {
+        sb.append(',');
+        if (pretty) {
+          sb.append('\n');
+        }
+      }
+      T model = modelList.get(i);
+      modelToJson(model, sb, (pretty ? "  " : ""));
+    }
+    if (pretty) {
+      sb.append('\n');
+    }
+    sb.append(']');
+    return sb.toString();
+
+  }
+
+  private <T extends Model> void modelToJson(T model, StringBuilder sb, String indent) {
     if (pretty) {
       sb.append(indent);
     }
@@ -70,7 +103,6 @@ class SimpleJsonFormatter implements JsonFormatter {
       sb.append('\n').append(indent);
     }
     sb.append('}');
-    return sb.toString();
   }
 
   private String[] lowerCased(Collection<String> collection) {

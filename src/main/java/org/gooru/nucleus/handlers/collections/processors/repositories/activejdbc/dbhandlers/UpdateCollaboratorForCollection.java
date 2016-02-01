@@ -1,13 +1,27 @@
 package org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbhandlers;
 
+import io.vertx.core.json.JsonObject;
+import org.gooru.nucleus.handlers.collections.constants.MessageConstants;
 import org.gooru.nucleus.handlers.collections.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.collections.processors.events.EventBuilderFactory;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityCollection;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entitybuilders.EntityBuilder;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.validators.PayloadValidator;
 import org.gooru.nucleus.handlers.collections.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
+import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponseFactory;
+import org.javalite.activejdbc.LazyList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 /**
  * Created by ashish on 12/1/16.
  */
 class UpdateCollaboratorForCollection implements DBHandler {
+  private static final Logger LOGGER = LoggerFactory.getLogger(UpdateCollaboratorForCollection.class);
   private final ProcessorContext context;
 
   public UpdateCollaboratorForCollection(ProcessorContext context) {
@@ -16,17 +30,76 @@ class UpdateCollaboratorForCollection implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> checkSanity() {
-    return null;
+    // Collection id is present
+    if (context.collectionId() == null || context.collectionId().isEmpty()) {
+      LOGGER.warn("Missing collection id");
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Missing collection id"),
+        ExecutionResult.ExecutionStatus.FAILED);
+    }
+    // The user should not be anonymous
+    if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
+      LOGGER.warn("Anonymous user attempting to edit collection");
+      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("Not allowed"), ExecutionResult.ExecutionStatus.FAILED);
+    }
+    // Payload should not be empty
+    if (context.request() == null || context.request().isEmpty()) {
+      LOGGER.warn("Empty payload supplied to upload collection");
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Empty payload"), ExecutionResult.ExecutionStatus.FAILED);
+    }
+    // Our validators should certify this
+    JsonObject errors = new PayloadValidator() {
+    }.validatePayload(context.request(), AJEntityCollection.editCollaboratorFieldSelector(), AJEntityCollection.getValidatorRegistry());
+    if (errors != null && !errors.isEmpty()) {
+      LOGGER.warn("Validation errors for request");
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionResult.ExecutionStatus.FAILED);
+    }
+    return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
+
   }
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    return null;
+    // Fetch the collection where type is collection and it is not deleted already and id is specified id
+    LazyList<AJEntityCollection> collections =
+      AJEntityCollection.findBySQL(AJEntityCollection.AUTHORIZER_QUERY, AJEntityCollection.COLLECTION, context.collectionId(), false);
+    // Collection should be present in DB
+    if (collections.size() < 1) {
+      LOGGER.warn("Collection id: {} not present in DB", context.collectionId());
+      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("collection id: " + context.collectionId()),
+        ExecutionResult.ExecutionStatus.FAILED);
+    }
+    AJEntityCollection collection = collections.get(0);
+    final String course = collection.getString(AJEntityCollection.COURSE_ID);
+    if (course != null) {
+      LOGGER.error("Cannot update collaborator for collection '{}' as it is part of course '{}'", context.collectionId(), course);
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Collection is part of course"),
+        ExecutionResult.ExecutionStatus.FAILED);
+    }
+    return new AuthorizerBuilder().buildUpdateCollaboratorAuthorizer(this.context).authorize(collection);
   }
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
-    return null;
+    AJEntityCollection collection = new AJEntityCollection();
+    collection.setId(context.collectionId());
+    collection.setModifierId(context.userId());
+    // Now auto populate is done, we need to setup the converter machinery
+    new EntityBuilder<AJEntityCollection>() {
+    }.build(collection, context.request(), AJEntityCollection.getConverterRegistry());
+
+    boolean result = collection.save();
+    if (!result) {
+      LOGGER.error("Collection with id '{}' failed to save", context.collectionId());
+      if (collection.hasErrors()) {
+        Map<String, String> map = collection.errors();
+        JsonObject errors = new JsonObject();
+        map.forEach(errors::put);
+        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionResult.ExecutionStatus.FAILED);
+      }
+    }
+    return new ExecutionResult<>(
+      MessageResponseFactory.createNoContentResponse("Updated", EventBuilderFactory.getDeleteCollectionEventBuilder(context.collectionId())),
+      ExecutionResult.ExecutionStatus.SUCCESSFUL);
   }
 
   @Override

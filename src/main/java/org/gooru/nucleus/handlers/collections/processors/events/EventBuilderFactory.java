@@ -27,7 +27,12 @@ public class EventBuilderFactory {
     return () -> new JsonObject().put(EVENT_NAME, EVT_COLLECTION_UPDATE).put(EVENT_BODY, new JsonObject().put(COLLECTION_ID, collectionId));
   }
 
-  public static EventBuilder getCopyCollectionEventBuilder(String collectionId) {
+  public static EventBuilder getAddQuestionToCollectionEventBuilder(String collectionId) {
     return () -> new JsonObject().put(EVENT_NAME, EVT_COLLECTION_COPY).put(EVENT_BODY, new JsonObject().put(COLLECTION_ID, collectionId));
   }
+
+  public static EventBuilder getAddResourceToCollectionEventBuilder(String collectionId) {
+    return () -> new JsonObject().put(EVENT_NAME, EVT_COLLECTION_COPY).put(EVENT_BODY, new JsonObject().put(COLLECTION_ID, collectionId));
+  }
+
 }
