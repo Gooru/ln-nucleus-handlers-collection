@@ -6,6 +6,7 @@ import org.gooru.nucleus.handlers.collections.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.collections.processors.events.EventBuilderFactory;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityCollection;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityContent;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityQuestion;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.validators.PayloadValidator;
 import org.gooru.nucleus.handlers.collections.processors.responses.ExecutionResult;
@@ -17,15 +18,12 @@ import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-
 /**
  * Created by ashish on 12/1/16.
  */
 class AddQuestionToCollectionHandler implements DBHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(UpdateCollectionHandler.class);
   private final ProcessorContext context;
-  private AJEntityCollection collection;
 
   public AddQuestionToCollectionHandler(ProcessorContext context) {
     this.context = context;
@@ -73,14 +71,14 @@ class AddQuestionToCollectionHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("collection id: " + context.collectionId()),
         ExecutionResult.ExecutionStatus.FAILED);
     }
-    this.collection = collections.get(0);
-    return new AuthorizerBuilder().buildAddContentToCollectionAuthorizer(this.context).authorize(this.collection);
+    AJEntityCollection collection = collections.get(0);
+    return new AuthorizerBuilder().buildAddContentToCollectionAuthorizer(this.context).authorize(collection);
   }
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
     try {
-      Object sequence = Base.firstCell(AJEntityQuestion.MAX_QUESTION_SEQUENCE_QUERY, this.context.collectionId());
+      Object sequence = Base.firstCell(AJEntityContent.MAX_CONTENT_SEQUENCE_QUERY, this.context.collectionId());
       int sequenceId = 1;
       if (sequence != null) {
         int currentSequence = Integer.valueOf(sequence.toString());
@@ -91,7 +89,9 @@ class AddQuestionToCollectionHandler implements DBHandler {
           this.context.userId());
 
       if (count == 1) {
-        return updateGrading();
+        return new ExecutionResult<>(MessageResponseFactory
+          .createNoContentResponse("Question added", EventBuilderFactory.getAddQuestionToCollectionEventBuilder(context.collectionId())),
+          ExecutionResult.ExecutionStatus.SUCCESSFUL);
       }
       LOGGER.error("Something is wrong. Adding question '{}' to collection '{}' updated '{}' rows", this.context.questionId(),
         this.context.collectionId(), count);
@@ -108,33 +108,4 @@ class AddQuestionToCollectionHandler implements DBHandler {
     return false;
   }
 
-  private ExecutionResult<MessageResponse> updateGrading() {
-    String currentGrading = this.collection.getString(AJEntityCollection.GRADING);
-    if (!currentGrading.equalsIgnoreCase(AJEntityCollection.GRADING_TYPE_TEACHER)) {
-      try {
-        long count = Base.count(AJEntityQuestion.TABLE_QUESTION, AJEntityQuestion.OPEN_ENDED_QUESTION_FILTER, this.context.collectionId());
-        if (count > 0) {
-          this.collection.setGrading(AJEntityCollection.GRADING_TYPE_TEACHER);
-          if (!this.collection.save()) {
-            LOGGER.error("Collection '{}' grading type change failed", this.context.collectionId());
-            if (this.collection.hasErrors()) {
-              Map<String, String> map = collection.errors();
-              JsonObject errors = new JsonObject();
-              map.forEach(errors::put);
-              return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionResult.ExecutionStatus.FAILED);
-            }
-          }
-        }
-      } catch (DBException e) {
-        LOGGER.error("Collection '{}' grading type change lookup failed", this.context.collectionId(), e);
-        return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Collection grade change failed"),
-          ExecutionResult.ExecutionStatus.FAILED);
-      }
-    }
-
-    return new ExecutionResult<>(MessageResponseFactory
-      .createNoContentResponse("Question added", EventBuilderFactory.getAddQuestionToCollectionEventBuilder(context.collectionId())),
-      ExecutionResult.ExecutionStatus.SUCCESSFUL);
-
-  }
 }

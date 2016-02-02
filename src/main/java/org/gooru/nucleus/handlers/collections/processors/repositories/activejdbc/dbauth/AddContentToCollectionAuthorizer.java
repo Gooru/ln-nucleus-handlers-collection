@@ -3,7 +3,7 @@ package org.gooru.nucleus.handlers.collections.processors.repositories.activejdb
 import io.vertx.core.json.JsonArray;
 import org.gooru.nucleus.handlers.collections.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityCollection;
-import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityQuestion;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityContent;
 import org.gooru.nucleus.handlers.collections.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponseFactory;
@@ -33,7 +33,7 @@ public class AddContentToCollectionAuthorizer implements Authorizer<AJEntityColl
       try {
         authRecordCount = Base.count(AJEntityCollection.TABLE_COURSE, AJEntityCollection.AUTH_FILTER, course_id, context.userId(), context.userId());
         if (authRecordCount >= 1) {
-          return authorizeForQuestion(collection);
+          return authorizeForContent(collection);
         }
       } catch (DBException e) {
         LOGGER.error("Error checking authorization for update for Collection '{}' for course '{}'", context.collectionId(), course_id, e);
@@ -45,13 +45,13 @@ public class AddContentToCollectionAuthorizer implements Authorizer<AJEntityColl
       // Collection is not part of course, hence we need user to be either owner or collaborator on collection
       if (context.userId().equalsIgnoreCase(owner_id)) {
         // Owner is fine
-        return authorizeForQuestion(collection);
+        return authorizeForContent(collection);
       } else {
         String collaborators = collection.getString(AJEntityCollection.COLLABORATOR);
         if (collaborators != null && !collaborators.isEmpty()) {
           JsonArray collaboratorsArray = new JsonArray(collaborators);
           if (collaboratorsArray.contains(context.userId())) {
-            return authorizeForQuestion(collection);
+            return authorizeForContent(collection);
           }
         }
       }
@@ -60,17 +60,19 @@ public class AddContentToCollectionAuthorizer implements Authorizer<AJEntityColl
     return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("Not allowed"), ExecutionResult.ExecutionStatus.FAILED);
   }
 
-  private ExecutionResult<MessageResponse> authorizeForQuestion(AJEntityCollection collection) {
+  private ExecutionResult<MessageResponse> authorizeForContent(AJEntityCollection collection) {
     //           return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
     try {
-      long count = Base.count(AJEntityQuestion.TABLE_QUESTION, AJEntityQuestion.QUESTION_FOR_ADD_FILTER, context.questionId(), context.userId());
+      long count = Base.count(AJEntityContent.TABLE_CONTENT, AJEntityContent.CONTENT_FOR_ADD_FILTER,
+        context.questionId() != null ? context.questionId() : context.resourceId(), context.userId());
       if (count == 1) {
         return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
       }
     } catch (DBException e) {
-      LOGGER.error("Error querying content '{}' availability for associating in collection '{}'", context.questionId(), context.collectionId(), e);
+      LOGGER.error("Error querying content '{}' availability for associating in collection '{}'",
+        context.questionId() != null ? context.questionId() : context.resourceId(), context.collectionId(), e);
     }
-    return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Question not available for association"),
+    return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Content not available for association"),
       ExecutionResult.ExecutionStatus.FAILED);
   }
 

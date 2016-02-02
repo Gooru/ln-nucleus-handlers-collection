@@ -23,7 +23,6 @@ import java.util.Map;
 class UpdateCollectionHandler implements DBHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(UpdateCollectionHandler.class);
   private final ProcessorContext context;
-  private AJEntityCollection collection;
 
   public UpdateCollectionHandler(ProcessorContext context) {
     this.context = context;

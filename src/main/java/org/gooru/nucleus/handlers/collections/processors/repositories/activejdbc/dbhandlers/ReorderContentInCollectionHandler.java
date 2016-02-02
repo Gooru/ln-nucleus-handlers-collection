@@ -7,7 +7,7 @@ import org.gooru.nucleus.handlers.collections.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.collections.processors.events.EventBuilderFactory;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityCollection;
-import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityQuestion;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityContent;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.validators.PayloadValidator;
 import org.gooru.nucleus.handlers.collections.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
@@ -28,7 +28,6 @@ import java.util.UUID;
 class ReorderContentInCollectionHandler implements DBHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(ReorderContentInCollectionHandler.class);
   private final ProcessorContext context;
-  private AJEntityCollection collection;
   private JsonArray input;
 
   public ReorderContentInCollectionHandler(ProcessorContext context) {
@@ -76,7 +75,7 @@ class ReorderContentInCollectionHandler implements DBHandler {
     }
     AJEntityCollection collection = collections.get(0);
     try {
-      List idList = Base.firstColumn(AJEntityQuestion.QUESTIONS_FOR_ASSESSMENT_QUERY, this.context.collectionId());
+      List idList = Base.firstColumn(AJEntityContent.CONTENT_FOR_REORDER_COLLECTION_QUERY, this.context.collectionId());
       this.input = this.context.request().getJsonArray(AJEntityCollection.REORDER_PAYLOAD_KEY);
       if (idList.size() != input.size()) {
         return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Question count mismatch"),
@@ -85,7 +84,7 @@ class ReorderContentInCollectionHandler implements DBHandler {
       for (Object entry : input) {
         String payloadId = ((JsonObject) entry).getString(AJEntityCollection.ID);
         if (!idList.contains(UUID.fromString(payloadId))) {
-          return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Missing question(s)"),
+          return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Missing content(s)"),
             ExecutionResult.ExecutionStatus.FAILED);
         }
       }
@@ -100,10 +99,10 @@ class ReorderContentInCollectionHandler implements DBHandler {
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
     try {
-      PreparedStatement ps = Base.startBatch(AJEntityQuestion.REORDER_QUERY);
+      PreparedStatement ps = Base.startBatch(AJEntityContent.REORDER_QUERY);
       for (Object entry : input) {
         String payloadId = ((JsonObject) entry).getString(AJEntityCollection.ID);
-        int sequenceId = ((JsonObject) entry).getInteger(AJEntityQuestion.SEQUENCE_ID);
+        int sequenceId = ((JsonObject) entry).getInteger(AJEntityContent.SEQUENCE_ID);
         Base.addBatch(ps, sequenceId, this.context.userId(), payloadId, context.collectionId());
       }
       Base.executeBatch(ps);

@@ -21,7 +21,7 @@ public class ProcessorContext {
     this.userId = userId;
     this.prefs = prefs.copy();
     this.request = request != null ? request.copy() : null;
-    // Assessment id and question id can be null in case of create and hence can't validate them unless we know the op type also
+    // Assessment id, resource id and question id can be null in case of create and hence can't validate them unless we know the op type also
     // Do not want to build dependency on op for this context to work and hence is open ended. Worst case would be RTE, so beware
     this.collectionId = collectionId;
     this.questionId = questionId;

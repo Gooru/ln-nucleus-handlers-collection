@@ -4,7 +4,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.collections.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityCollection;
-import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityQuestion;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityContent;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.formatter.JsonFormatterBuilder;
 import org.gooru.nucleus.handlers.collections.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
@@ -59,13 +59,13 @@ class FetchCollectionHandler implements DBHandler {
     // First create response from Collection
     JsonObject response =
       new JsonObject(new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityCollection.FETCH_QUERY_FIELD_LIST).toJson(this.collection));
-    // Now query questions and populate them
-    LazyList<AJEntityQuestion> questions = AJEntityQuestion.findBySQL(AJEntityQuestion.FETCH_QUESTION_SUMMARY_QUERY, context.collectionId());
-    if (questions.size() > 0) {
-      response.put(AJEntityQuestion.QUESTION,
-        new JsonArray(new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityQuestion.FETCH_QUESTION_SUMMARY_FIELDS).toJson(questions)));
+    // Now query contents and populate them
+    LazyList<AJEntityContent> contents = AJEntityContent.findBySQL(AJEntityContent.FETCH_CONTENT_SUMMARY_QUERY, context.collectionId());
+    if (contents.size() > 0) {
+      response.put(AJEntityContent.CONTENT,
+        new JsonArray(new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityContent.FETCH_CONTENT_SUMMARY_FIELDS).toJson(contents)));
     } else {
-      response.put(AJEntityQuestion.QUESTION, new JsonArray());
+      response.put(AJEntityContent.CONTENT, new JsonArray());
     }
     // Now collaborator, we need to know if we want to get it from course or whatever is in the collection would suffice
     String course_id = this.collection.getString(AJEntityCollection.COURSE_ID);
@@ -79,9 +79,9 @@ class FetchCollectionHandler implements DBHandler {
     } else {
       try {
         // Need to fetch collaborators
-        Object courseCollabObject = Base.firstCell(AJEntityCollection.COURSE_COLLABORATOR_QUERY, course_id);
-        if (courseCollabObject != null) {
-          response.put(AJEntityCollection.COLLABORATOR, new JsonArray(courseCollabObject.toString()));
+        Object courseCollaboratorObject = Base.firstCell(AJEntityCollection.COURSE_COLLABORATOR_QUERY, course_id);
+        if (courseCollaboratorObject != null) {
+          response.put(AJEntityCollection.COLLABORATOR, new JsonArray(courseCollaboratorObject.toString()));
         } else {
           response.put(AJEntityCollection.COLLABORATOR, new JsonArray());
         }

@@ -64,7 +64,6 @@ class CreateCollectionHandler implements DBHandler {
     collection.setOwnerId(context.userId());
     collection.setCreatorId(context.userId());
     collection.setTypeCollection();
-    collection.setGrading(AJEntityCollection.GRADING_TYPE_SYSTEM);
     // Now auto populate is done, we need to setup the converter machinery
     new EntityBuilder<AJEntityCollection>() {
     }.build(collection, context.request(), AJEntityCollection.getConverterRegistry());
@@ -80,7 +79,7 @@ class CreateCollectionHandler implements DBHandler {
       }
     }
     return new ExecutionResult<>(MessageResponseFactory
-      .createNoContentResponse("Created", EventBuilderFactory.getDeleteCollectionEventBuilder(collection.getString(AJEntityCollection.ID))),
+      .createNoContentResponse("Created", EventBuilderFactory.getCreateCollectionEventBuilder(collection.getString(AJEntityCollection.ID))),
       ExecutionResult.ExecutionStatus.SUCCESSFUL);
   }
 

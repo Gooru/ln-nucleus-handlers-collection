@@ -6,7 +6,7 @@ import org.gooru.nucleus.handlers.collections.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.collections.processors.events.EventBuilderFactory;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityCollection;
-import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityQuestion;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityContent;
 import org.gooru.nucleus.handlers.collections.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponseFactory;
@@ -102,7 +102,7 @@ class DeleteCollectionHandler implements DBHandler {
 
   private boolean deleteContents() {
     try {
-      long deletedContentCount = Base.exec(AJEntityQuestion.DELETE_CONTENTS_QUERY, this.context.userId(), this.context.collectionId());
+      long deletedContentCount = Base.exec(AJEntityContent.DELETE_CONTENTS_QUERY, this.context.userId(), this.context.collectionId());
       LOGGER.info("Collection '{}' deleted along with '{}' questions", context.collectionId(), deletedContentCount);
       return true;
     } catch (DBException e) {

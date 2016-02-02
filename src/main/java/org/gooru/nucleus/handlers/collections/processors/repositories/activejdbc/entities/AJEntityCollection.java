@@ -45,8 +45,6 @@ public class AJEntityCollection extends Model {
   public static final String COLLECTION_TYPE_VALUE = "collection";
   public static final String ORIENTATION_TYPE_NAME = "orientation_type";
   public static final String GRADING_TYPE_NAME = "grading_type";
-  public static final String GRADING_TYPE_TEACHER = "teacher";
-  public static final String GRADING_TYPE_SYSTEM = "system";
   public static final String REORDER_PAYLOAD_KEY = "order";
 
   // Queries used
@@ -167,6 +165,12 @@ public class AJEntityCollection extends Model {
 
   public static FieldSelector addQuestionFieldSelector() {
     return () -> Collections.unmodifiableSet(ADD_QUESTION_FIELDS);
+  }
+
+
+  public static FieldSelector addResourceFieldSelector() {
+    // FIXME: 2/2/16 Correct values should be returned instead of null
+    return null;
   }
 
   public static ValidatorRegistry getValidatorRegistry() {
