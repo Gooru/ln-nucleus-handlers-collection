@@ -97,7 +97,7 @@ class ReorderContentInCollectionHandler implements DBHandler {
         ExecutionResult.ExecutionStatus.FAILED);
     }
 
-    return new AuthorizerBuilder().buildUpdateAuthorizer(this.context).authorize(collection);
+    return AuthorizerBuilder.buildUpdateAuthorizer(this.context).authorize(collection);
   }
 
   @Override

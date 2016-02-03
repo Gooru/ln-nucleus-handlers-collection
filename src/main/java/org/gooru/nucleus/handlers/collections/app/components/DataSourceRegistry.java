@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class DataSourceRegistry implements Initializer, Finalizer {
+public final class DataSourceRegistry implements Initializer, Finalizer {
 
   private static final String DEFAULT_DATA_SOURCE = "defaultDataSource";
   private static final String DEFAULT_DATA_SOURCE_TYPE = "nucleus.ds.type";

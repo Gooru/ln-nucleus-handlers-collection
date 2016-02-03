@@ -6,9 +6,13 @@ import org.gooru.nucleus.handlers.collections.processors.repositories.Collection
 /**
  * Created by ashish on 7/1/16.
  */
-public class AJRepoBuilder {
+public final class AJRepoBuilder {
 
-  public CollectionRepo buildCollectionRepo(ProcessorContext context) {
+  private AJRepoBuilder() {
+    throw new AssertionError();
+  }
+
+  public static CollectionRepo buildCollectionRepo(ProcessorContext context) {
     return new AJCollectionRepo(context);
   }
 

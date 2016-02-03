@@ -71,13 +71,13 @@ class UpdateCollectionHandler implements DBHandler {
         ExecutionResult.ExecutionStatus.FAILED);
     }
     AJEntityCollection collection = collections.get(0);
-    return new AuthorizerBuilder().buildUpdateAuthorizer(this.context).authorize(collection);
+    return AuthorizerBuilder.buildUpdateAuthorizer(this.context).authorize(collection);
   }
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
     AJEntityCollection collection = new AJEntityCollection();
-    collection.setId(context.collectionId());
+    collection.setIdWithConverter(context.collectionId());
     collection.setModifierId(context.userId());
     // Now auto populate is done, we need to setup the converter machinery
     new DefaultAJEntityCollectionEntityBuilder().build(collection, context.request(), AJEntityCollection.getConverterRegistry());

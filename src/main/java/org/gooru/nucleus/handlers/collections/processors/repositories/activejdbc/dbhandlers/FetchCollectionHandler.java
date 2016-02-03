@@ -64,12 +64,12 @@ class FetchCollectionHandler implements DBHandler {
   public ExecutionResult<MessageResponse> executeRequest() {
     // First create response from Collection
     JsonObject response =
-      new JsonObject(new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityCollection.FETCH_QUERY_FIELD_LIST).toJson(this.collection));
+      new JsonObject(JsonFormatterBuilder.buildSimpleJsonFormatter(false, AJEntityCollection.FETCH_QUERY_FIELD_LIST).toJson(this.collection));
     // Now query contents and populate them
     LazyList<AJEntityContent> contents = AJEntityContent.findBySQL(AJEntityContent.FETCH_CONTENT_SUMMARY_QUERY, context.collectionId());
     if (contents.size() > 0) {
       response.put(AJEntityContent.CONTENT,
-        new JsonArray(new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityContent.FETCH_CONTENT_SUMMARY_FIELDS).toJson(contents)));
+        new JsonArray(JsonFormatterBuilder.buildSimpleJsonFormatter(false, AJEntityContent.FETCH_CONTENT_SUMMARY_FIELDS).toJson(contents)));
     } else {
       response.put(AJEntityContent.CONTENT, new JsonArray());
     }

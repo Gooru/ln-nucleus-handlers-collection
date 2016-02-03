@@ -75,7 +75,7 @@ class AddQuestionToCollectionHandler implements DBHandler {
         ExecutionResult.ExecutionStatus.FAILED);
     }
     AJEntityCollection collection = collections.get(0);
-    return new AuthorizerBuilder().buildAddContentToCollectionAuthorizer(this.context).authorize(collection);
+    return AuthorizerBuilder.buildAddContentToCollectionAuthorizer(this.context).authorize(collection);
   }
 
   @Override

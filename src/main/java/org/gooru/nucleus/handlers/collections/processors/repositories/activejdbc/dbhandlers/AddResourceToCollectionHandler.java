@@ -26,7 +26,7 @@ import java.util.ResourceBundle;
 class AddResourceToCollectionHandler implements DBHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(UpdateCollectionHandler.class);
   private final ProcessorContext context;
-  private static ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
+  private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
 
   public AddResourceToCollectionHandler(ProcessorContext context) {
     this.context = context;
@@ -75,7 +75,7 @@ class AddResourceToCollectionHandler implements DBHandler {
         ExecutionResult.ExecutionStatus.FAILED);
     }
     AJEntityCollection collection = collections.get(0);
-    return new AuthorizerBuilder().buildAddContentToCollectionAuthorizer(this.context).authorize(collection);
+    return AuthorizerBuilder.buildAddContentToCollectionAuthorizer(this.context).authorize(collection);
   }
 
   @Override

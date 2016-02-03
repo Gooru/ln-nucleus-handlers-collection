@@ -78,7 +78,7 @@ class MessageProcessor implements Processor {
     if (!validateContext(context)) {
       return MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("collection.id.invalid"));
     }
-    return new RepoBuilder().buildCollectionRepo(context).reorderContentInCollection();
+    return RepoBuilder.buildCollectionRepo(context).reorderContentInCollection();
   }
 
   private MessageResponse processCollectionCollaboratorUpdate() {
@@ -86,7 +86,7 @@ class MessageProcessor implements Processor {
     if (!validateContext(context)) {
       return MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("collection.id.invalid"));
     }
-    return new RepoBuilder().buildCollectionRepo(context).updateCollaborator();
+    return RepoBuilder.buildCollectionRepo(context).updateCollaborator();
   }
 
   private MessageResponse processCollectionAddQuestion() {
@@ -94,7 +94,7 @@ class MessageProcessor implements Processor {
     if (!validateContextWithQuestion(context)) {
       return MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("collection.question.id.invalid"));
     }
-    return new RepoBuilder().buildCollectionRepo(context).addQuestionToCollection();
+    return RepoBuilder.buildCollectionRepo(context).addQuestionToCollection();
   }
 
   private MessageResponse processCollectionAddResource() {
@@ -102,7 +102,7 @@ class MessageProcessor implements Processor {
     if (!validateContextWithResource(context)) {
       return MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("collection.resource.id.invalid"));
     }
-    return new RepoBuilder().buildCollectionRepo(context).addResourceToCollection();
+    return RepoBuilder.buildCollectionRepo(context).addResourceToCollection();
   }
 
   private MessageResponse processCollectionDelete() {
@@ -110,7 +110,7 @@ class MessageProcessor implements Processor {
     if (!validateContext(context)) {
       return MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("collection.id.invalid"));
     }
-    return new RepoBuilder().buildCollectionRepo(context).deleteCollection();
+    return RepoBuilder.buildCollectionRepo(context).deleteCollection();
   }
 
   private MessageResponse processCollectionUpdate() {
@@ -118,7 +118,7 @@ class MessageProcessor implements Processor {
     if (!validateContext(context)) {
       return MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("collection.id.invalid"));
     }
-    return new RepoBuilder().buildCollectionRepo(context).updateCollection();
+    return RepoBuilder.buildCollectionRepo(context).updateCollection();
   }
 
   private MessageResponse processCollectionGet() {
@@ -126,13 +126,13 @@ class MessageProcessor implements Processor {
     if (!validateContext(context)) {
       return MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("collection.id.invalid"));
     }
-    return new RepoBuilder().buildCollectionRepo(context).fetchCollection();
+    return RepoBuilder.buildCollectionRepo(context).fetchCollection();
   }
 
   private MessageResponse processCollectionCreate() {
     ProcessorContext context = createContext();
 
-    return new RepoBuilder().buildCollectionRepo(context).createCollection();
+    return RepoBuilder.buildCollectionRepo(context).createCollection();
   }
 
   private ProcessorContext createContext() {

@@ -208,7 +208,7 @@ public class AJEntityCollection extends Model {
     }
   }
 
-  public void setId(String id) {
+  public void setIdWithConverter(String id) {
     FieldConverter fc = converterRegistry.get(ID);
     if (fc != null) {
       this.set(ID, fc.convertField(id));

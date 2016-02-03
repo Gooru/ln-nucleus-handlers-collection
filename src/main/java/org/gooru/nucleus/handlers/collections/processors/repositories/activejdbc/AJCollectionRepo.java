@@ -18,41 +18,41 @@ public class AJCollectionRepo implements CollectionRepo {
 
   @Override
   public MessageResponse deleteCollection() {
-    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildDeleteCollectionHandler(context));
+    return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildDeleteCollectionHandler(context));
   }
 
   @Override
   public MessageResponse updateCollection() {
-    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildUpdateCollectionHandler(context));
+    return  TransactionExecutor.executeTransaction(DBHandlerBuilder.buildUpdateCollectionHandler(context));
   }
 
   @Override
   public MessageResponse fetchCollection() {
-    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildFetchCollectionHandler(context));
+    return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildFetchCollectionHandler(context));
   }
 
   @Override
   public MessageResponse createCollection() {
-    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildCreateCollectionHandler(context));
+    return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildCreateCollectionHandler(context));
   }
 
   @Override
   public MessageResponse reorderContentInCollection() {
-    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildReorderContentInCollectionHandler(context));
+    return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildReorderContentInCollectionHandler(context));
   }
 
   @Override
   public MessageResponse updateCollaborator() {
-    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildUpdateCollaboratorForCollection(context));
+    return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildUpdateCollaboratorForCollection(context));
   }
 
   @Override
   public MessageResponse addQuestionToCollection() {
-    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildAddQuestionToCollectionHandler(context));
+    return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildAddQuestionToCollectionHandler(context));
   }
 
   @Override
   public MessageResponse addResourceToCollection() {
-    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildAddResourceToCollectionHandler(context));
+    return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildAddResourceToCollectionHandler(context));
   }
 }

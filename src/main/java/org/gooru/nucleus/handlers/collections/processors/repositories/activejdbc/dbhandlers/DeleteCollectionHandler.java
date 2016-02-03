@@ -66,14 +66,14 @@ class DeleteCollectionHandler implements DBHandler {
       LOGGER.warn("Collection with id '{}' is published collection so should not be deleted", context.collectionId());
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("collection.published")), ExecutionResult.ExecutionStatus.FAILED);
     }
-    return new AuthorizerBuilder().buildDeleteAuthorizer(this.context).authorize(collection);
+    return AuthorizerBuilder.buildDeleteAuthorizer(this.context).authorize(collection);
   }
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
     // Update collection, we need to set the deleted flag and user who is deleting it but We do not reset the sequence id right now
     AJEntityCollection collectionToDelete = new AJEntityCollection();
-    collectionToDelete.setId(context.collectionId());
+    collectionToDelete.setIdWithConverter(context.collectionId());
     collectionToDelete.setBoolean(AJEntityCollection.IS_DELETED, true);
     collectionToDelete.setModifierId(context.userId());
 

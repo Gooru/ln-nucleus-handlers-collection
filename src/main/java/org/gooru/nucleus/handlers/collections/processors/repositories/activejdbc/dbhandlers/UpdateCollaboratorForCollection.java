@@ -77,13 +77,13 @@ class UpdateCollaboratorForCollection implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("collection.belongs.to.course")),
         ExecutionResult.ExecutionStatus.FAILED);
     }
-    return new AuthorizerBuilder().buildUpdateCollaboratorAuthorizer(this.context).authorize(collection);
+    return AuthorizerBuilder.buildUpdateCollaboratorAuthorizer(this.context).authorize(collection);
   }
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
     AJEntityCollection collection = new AJEntityCollection();
-    collection.setId(context.collectionId());
+    collection.setIdWithConverter(context.collectionId());
     collection.setModifierId(context.userId());
     // Now auto populate is done, we need to setup the converter machinery
     new DefaultAJEntityCollectionEntityBuilder().build(collection, context.request(), AJEntityCollection.getConverterRegistry());
