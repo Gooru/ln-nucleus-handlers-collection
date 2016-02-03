@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.ResourceBundle;
 
 /**
  * Created by ashish on 12/1/16.
@@ -23,6 +24,7 @@ import java.util.Map;
 class UpdateCollectionHandler implements DBHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(UpdateCollectionHandler.class);
   private final ProcessorContext context;
+  private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
 
   public UpdateCollectionHandler(ProcessorContext context) {
     this.context = context;
@@ -33,22 +35,21 @@ class UpdateCollectionHandler implements DBHandler {
     // There should be an collection id present
     if (context.collectionId() == null || context.collectionId().isEmpty()) {
       LOGGER.warn("Missing collection id");
-      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Missing collection id"),
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("collection.id.missing")),
         ExecutionResult.ExecutionStatus.FAILED);
     }
     // The user should not be anonymous
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
       LOGGER.warn("Anonymous user attempting to edit collection");
-      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("Not allowed"), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")), ExecutionResult.ExecutionStatus.FAILED);
     }
     // Payload should not be empty
     if (context.request() == null || context.request().isEmpty()) {
       LOGGER.warn("Empty payload supplied to edit collection");
-      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Empty payload"), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("payload.empty")), ExecutionResult.ExecutionStatus.FAILED);
     }
     // Our validators should certify this
-    JsonObject errors = new PayloadValidator() {
-    }.validatePayload(context.request(), AJEntityCollection.editFieldSelector(), AJEntityCollection.getValidatorRegistry());
+    JsonObject errors = new DefaultPayloadValidator().validatePayload(context.request(), AJEntityCollection.editFieldSelector(), AJEntityCollection.getValidatorRegistry());
     if (errors != null && !errors.isEmpty()) {
       LOGGER.warn("Validation errors for request");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionResult.ExecutionStatus.FAILED);
@@ -66,7 +67,7 @@ class UpdateCollectionHandler implements DBHandler {
     // Collection should be present in DB
     if (collections.size() < 1) {
       LOGGER.warn("Collection id: {} not present in DB", context.collectionId());
-      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("collection id: " + context.collectionId()),
+      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(resourceBundle.getString("collection.id") + context.collectionId()),
         ExecutionResult.ExecutionStatus.FAILED);
     }
     AJEntityCollection collection = collections.get(0);
@@ -79,8 +80,7 @@ class UpdateCollectionHandler implements DBHandler {
     collection.setId(context.collectionId());
     collection.setModifierId(context.userId());
     // Now auto populate is done, we need to setup the converter machinery
-    new EntityBuilder<AJEntityCollection>() {
-    }.build(collection, context.request(), AJEntityCollection.getConverterRegistry());
+    new DefaultAJEntityCollectionEntityBuilder().build(collection, context.request(), AJEntityCollection.getConverterRegistry());
 
     boolean result = collection.save();
     if (!result) {
@@ -93,7 +93,7 @@ class UpdateCollectionHandler implements DBHandler {
       }
     }
     return new ExecutionResult<>(
-      MessageResponseFactory.createNoContentResponse("Updated", EventBuilderFactory.getDeleteCollectionEventBuilder(context.collectionId())),
+      MessageResponseFactory.createNoContentResponse(resourceBundle.getString("updated"), EventBuilderFactory.getDeleteCollectionEventBuilder(context.collectionId())),
       ExecutionResult.ExecutionStatus.SUCCESSFUL);
   }
 
@@ -102,4 +102,9 @@ class UpdateCollectionHandler implements DBHandler {
     return false;
   }
 
+  private static class DefaultPayloadValidator implements PayloadValidator {
+  }
+
+  private static class DefaultAJEntityCollectionEntityBuilder implements EntityBuilder<AJEntityCollection> {
+  }
 }

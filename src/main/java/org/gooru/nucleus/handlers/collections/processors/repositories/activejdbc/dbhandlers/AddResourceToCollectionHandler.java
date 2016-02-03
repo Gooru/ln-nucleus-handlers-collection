@@ -18,12 +18,15 @@ import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ResourceBundle;
+
 /**
  * Created by ashish on 12/1/16.
  */
 class AddResourceToCollectionHandler implements DBHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(UpdateCollectionHandler.class);
   private final ProcessorContext context;
+  private static ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
 
   public AddResourceToCollectionHandler(ProcessorContext context) {
     this.context = context;
@@ -34,22 +37,22 @@ class AddResourceToCollectionHandler implements DBHandler {
     // There should be an collection id present
     if (context.collectionId() == null || context.collectionId().isEmpty() || context.resourceId() == null || context.resourceId().isEmpty()) {
       LOGGER.warn("Missing collection/question id");
-      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Missing collection/question id"),
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("content.id.missing")),
         ExecutionResult.ExecutionStatus.FAILED);
     }
     // The user should not be anonymous
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
       LOGGER.warn("Anonymous user attempting to edit collection");
-      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("Not allowed"), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")), ExecutionResult.ExecutionStatus.FAILED);
     }
     // Payload should not be empty
     if (context.request() == null || context.request().isEmpty()) {
       LOGGER.warn("Empty payload supplied to edit collection");
-      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Empty payload"), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("payload.empty")), ExecutionResult.ExecutionStatus.FAILED);
     }
     // Our validators should certify this
-    JsonObject errors = new PayloadValidator() {
-    }.validatePayload(context.request(), AJEntityCollection.addResourceFieldSelector(), AJEntityCollection.getValidatorRegistry());
+    JsonObject errors = new DefaultPayloadValidator()
+      .validatePayload(context.request(), AJEntityCollection.addResourceFieldSelector(), AJEntityCollection.getValidatorRegistry());
     if (errors != null && !errors.isEmpty()) {
       LOGGER.warn("Validation errors for request");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionResult.ExecutionStatus.FAILED);
@@ -68,7 +71,7 @@ class AddResourceToCollectionHandler implements DBHandler {
     // Collection should be present in DB
     if (collections.size() < 1) {
       LOGGER.warn("Collection id: {} not present in DB", context.collectionId());
-      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("collection id: " + context.collectionId()),
+      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(resourceBundle.getString("collection.id") + context.collectionId()),
         ExecutionResult.ExecutionStatus.FAILED);
     }
     AJEntityCollection collection = collections.get(0);
@@ -89,7 +92,7 @@ class AddResourceToCollectionHandler implements DBHandler {
           this.context.userId());
       if (count == 1) {
         return new ExecutionResult<>(MessageResponseFactory
-          .createNoContentResponse("Question added", EventBuilderFactory.getAddResourceToCollectionEventBuilder(context.collectionId())),
+          .createNoContentResponse(resourceBundle.getString("resource.added"), EventBuilderFactory.getAddResourceToCollectionEventBuilder(context.collectionId())),
           ExecutionResult.ExecutionStatus.SUCCESSFUL);
       } else {
         LOGGER.error("Something is wrong. Adding resource '{}' to collection '{}' updated '{}' rows", this.context.resourceId(),
@@ -97,8 +100,10 @@ class AddResourceToCollectionHandler implements DBHandler {
       }
     } catch (DBException e) {
       LOGGER.error("Not able to add resource '{}' to collection '{}'", this.context.resourceId(), this.context.collectionId(), e);
+      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(resourceBundle.getString("internal.store.error")),
+        ExecutionResult.ExecutionStatus.FAILED);
     }
-    return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Unable to add resource"),
+    return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(resourceBundle.getString("resource.add.failed")),
       ExecutionResult.ExecutionStatus.FAILED);
   }
 
@@ -107,4 +112,6 @@ class AddResourceToCollectionHandler implements DBHandler {
     return false;
   }
 
+  private static class DefaultPayloadValidator implements PayloadValidator {
+  }
 }

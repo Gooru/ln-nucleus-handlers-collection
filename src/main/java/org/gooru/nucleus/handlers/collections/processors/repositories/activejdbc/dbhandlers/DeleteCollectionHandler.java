@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.ResourceBundle;
 
 /**
  * Created by ashish on 12/1/16.
@@ -24,6 +25,7 @@ import java.util.Map;
 class DeleteCollectionHandler implements DBHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(DeleteCollectionHandler.class);
   private final ProcessorContext context;
+  private final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
 
   public DeleteCollectionHandler(ProcessorContext context) {
     this.context = context;
@@ -34,12 +36,12 @@ class DeleteCollectionHandler implements DBHandler {
     // There should be an collection id present
     if (context.collectionId() == null || context.collectionId().isEmpty()) {
       LOGGER.warn("Missing collection id");
-      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Missing collection id"), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(resourceBundle.getString("collection.id.missing")), ExecutionResult.ExecutionStatus.FAILED);
     }
     // The user should not be anonymous
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
       LOGGER.warn("Anonymous user attempting to delete collection");
-      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("Not allowed"), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")), ExecutionResult.ExecutionStatus.FAILED);
     }
 
     return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
@@ -55,14 +57,14 @@ class DeleteCollectionHandler implements DBHandler {
     // Collection should be present in DB
     if (collections.size() < 1) {
       LOGGER.warn("Collection id: {} not present in DB", context.collectionId());
-      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("collection id: " + context.collectionId()),
+      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(resourceBundle.getString("collection.id") + context.collectionId()),
         ExecutionResult.ExecutionStatus.FAILED);
     }
     AJEntityCollection collection = collections.get(0);
     // This should not be published
     if (collection.getDate(AJEntityCollection.PUBLISH_DATE) != null) {
       LOGGER.warn("Collection with id '{}' is published collection so should not be deleted", context.collectionId());
-      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("Collection is published"), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("collection.published")), ExecutionResult.ExecutionStatus.FAILED);
     }
     return new AuthorizerBuilder().buildDeleteAuthorizer(this.context).authorize(collection);
   }
@@ -86,11 +88,11 @@ class DeleteCollectionHandler implements DBHandler {
       }
     }
     if (!deleteContents()) {
-      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Not able to delete questions"),
+      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(resourceBundle.getString("contents.delete.error")),
         ExecutionResult.ExecutionStatus.FAILED);
     }
     return new ExecutionResult<>(
-      MessageResponseFactory.createNoContentResponse("Deleted", EventBuilderFactory.getDeleteCollectionEventBuilder(context.collectionId())),
+      MessageResponseFactory.createNoContentResponse(resourceBundle.getString("deleted"), EventBuilderFactory.getDeleteCollectionEventBuilder(context.collectionId())),
       ExecutionResult.ExecutionStatus.SUCCESSFUL);
   }
 

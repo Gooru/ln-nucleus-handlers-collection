@@ -12,12 +12,15 @@ import org.javalite.activejdbc.DBException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ResourceBundle;
+
 /**
  * Created by ashish on 1/2/16.
  */
 public class AddContentToCollectionAuthorizer implements Authorizer<AJEntityCollection> {
   private final ProcessorContext context;
   private final Logger LOGGER = LoggerFactory.getLogger(Authorizer.class);
+  private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
 
   public AddContentToCollectionAuthorizer(ProcessorContext context) {
     this.context = context;
@@ -38,7 +41,7 @@ public class AddContentToCollectionAuthorizer implements Authorizer<AJEntityColl
       } catch (DBException e) {
         LOGGER.error("Error checking authorization for update for Collection '{}' for course '{}'", context.collectionId(), course_id, e);
         return new ExecutionResult<>(
-          MessageResponseFactory.createInternalErrorResponse("Not able to authorize user for adding content to this collection"),
+          MessageResponseFactory.createInternalErrorResponse(resourceBundle.getString("internal.error.authorization.checking")),
           ExecutionResult.ExecutionStatus.FAILED);
       }
     } else {
@@ -57,7 +60,7 @@ public class AddContentToCollectionAuthorizer implements Authorizer<AJEntityColl
       }
     }
     LOGGER.warn("User: '{}' is not owner/collaborator of collection: '{}' or owner/collaborator on course", context.userId(), context.collectionId());
-    return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("Not allowed"), ExecutionResult.ExecutionStatus.FAILED);
+    return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")), ExecutionResult.ExecutionStatus.FAILED);
   }
 
   private ExecutionResult<MessageResponse> authorizeForContent(AJEntityCollection collection) {
@@ -71,8 +74,11 @@ public class AddContentToCollectionAuthorizer implements Authorizer<AJEntityColl
     } catch (DBException e) {
       LOGGER.error("Error querying content '{}' availability for associating in collection '{}'",
         context.questionId() != null ? context.questionId() : context.resourceId(), context.collectionId(), e);
+      return new ExecutionResult<>(
+        MessageResponseFactory.createInternalErrorResponse(resourceBundle.getString("internal.error.authorization.checking")),
+        ExecutionResult.ExecutionStatus.FAILED);
     }
-    return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Content not available for association"),
+    return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("content.association.not.available")),
       ExecutionResult.ExecutionStatus.FAILED);
   }
 

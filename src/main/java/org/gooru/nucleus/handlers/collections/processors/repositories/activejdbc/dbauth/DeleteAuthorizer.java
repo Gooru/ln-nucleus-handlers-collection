@@ -10,12 +10,15 @@ import org.javalite.activejdbc.DBException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ResourceBundle;
+
 /**
  * Created by ashish on 29/1/16.
  */
 class DeleteAuthorizer implements Authorizer<AJEntityCollection> {
   private final ProcessorContext context;
   private final Logger LOGGER = LoggerFactory.getLogger(Authorizer.class);
+  private final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
 
   DeleteAuthorizer(ProcessorContext context) {
     this.context = context;
@@ -35,7 +38,7 @@ class DeleteAuthorizer implements Authorizer<AJEntityCollection> {
         }
       } catch (DBException e) {
         LOGGER.error("Error checking authorization for delete for Collection '{}' for course '{}'", context.collectionId(), course_id, e);
-        return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Not able to delete contents for this collection"),
+        return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(resourceBundle.getString("internal.error.authorization.checking")),
           ExecutionResult.ExecutionStatus.FAILED);
       }
     } else {
@@ -46,6 +49,6 @@ class DeleteAuthorizer implements Authorizer<AJEntityCollection> {
       }
     }
     LOGGER.warn("User: '{}' is not owner of collection: '{}' or owner/collaborator on course", context.userId(), context.collectionId());
-    return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("Not allowed"), ExecutionResult.ExecutionStatus.FAILED);
+    return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")), ExecutionResult.ExecutionStatus.FAILED);
   }
 }

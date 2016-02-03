@@ -1,13 +1,18 @@
 package org.gooru.nucleus.handlers.collections.processors.responses;
 
 import io.vertx.core.json.JsonObject;
+import org.gooru.nucleus.handlers.collections.constants.HttpConstants;
 import org.gooru.nucleus.handlers.collections.constants.MessageConstants;
 import org.gooru.nucleus.handlers.collections.processors.events.EventBuilder;
 
 /**
  * Created by ashish on 6/1/16.
  */
-public class MessageResponseFactory {
+public final class MessageResponseFactory {
+  private MessageResponseFactory() {
+    throw new AssertionError();
+  }
+
   public static MessageResponse createInvalidRequestResponse() {
     return new MessageResponse.Builder().failed().setStatusBadRequest().build();
   }
@@ -56,6 +61,16 @@ public class MessageResponseFactory {
     return new MessageResponse.Builder().successful().setStatusNoOutput().setResponseBody(new JsonObject().put(MessageConstants.MSG_MESSAGE, message))
                                         .setEventData(eventBuilder.build()).build();
   }
+
+  public static MessageResponse createCreatedResponse(String locationHeader) {
+    return new MessageResponse.Builder().successful().setStatusCreated().setHeader(HttpConstants.HEADER_LOCATION, locationHeader).build();
+  }
+
+  public static MessageResponse createCreatedResponse(String locationHeader, EventBuilder eventBuilder) {
+    return new MessageResponse.Builder().successful().setStatusCreated().setHeader(HttpConstants.HEADER_LOCATION, locationHeader)
+                                        .setEventData(eventBuilder.build()).build();
+  }
+
 
   public static MessageResponse createOkayResponse(JsonObject body) {
     return new MessageResponse.Builder().successful().setStatusOkay().setResponseBody(body).build();

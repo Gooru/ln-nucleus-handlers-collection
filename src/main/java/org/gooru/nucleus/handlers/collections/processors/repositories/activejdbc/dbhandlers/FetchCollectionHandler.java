@@ -15,6 +15,8 @@ import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ResourceBundle;
+
 /**
  * Created by ashish on 12/1/16.
  */
@@ -23,6 +25,7 @@ class FetchCollectionHandler implements DBHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(FetchCollectionHandler.class);
   private final ProcessorContext context;
   private AJEntityCollection collection;
+  private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
 
   public FetchCollectionHandler(ProcessorContext context) {
     this.context = context;
@@ -33,12 +36,14 @@ class FetchCollectionHandler implements DBHandler {
     // There should be an collection id present
     if (context.collectionId() == null || context.collectionId().isEmpty()) {
       LOGGER.warn("Missing collection");
-      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Missing collection"), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(resourceBundle.getString("collection.id") + context.collectionId()),
+        ExecutionResult.ExecutionStatus.FAILED);
     }
 
     if (context.userId() == null || context.userId().isEmpty()) {
       LOGGER.warn("Invalid user");
-      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("Not allowed"), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")),
+        ExecutionResult.ExecutionStatus.FAILED);
     }
     return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
   }
@@ -48,7 +53,8 @@ class FetchCollectionHandler implements DBHandler {
     LazyList<AJEntityCollection> collections = AJEntityCollection.findBySQL(AJEntityCollection.FETCH_QUERY, context.collectionId());
     if (collections.size() == 0) {
       LOGGER.warn("Not able to find collection '{}'", this.context.collectionId());
-      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Not found"), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(resourceBundle.getString("not.found")),
+        ExecutionResult.ExecutionStatus.FAILED);
     }
     this.collection = collections.get(0);
     return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
@@ -87,7 +93,8 @@ class FetchCollectionHandler implements DBHandler {
         }
       } catch (DBException e) {
         LOGGER.error("Error trying to get course collaborator for course '{}' to fetch collection '{}'", course_id, this.context.collectionId(), e);
-        return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(e.getMessage()), ExecutionResult.ExecutionStatus.FAILED);
+        return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(resourceBundle.getString("internal.store.error")),
+          ExecutionResult.ExecutionStatus.FAILED);
       }
     }
     return new ExecutionResult<>(MessageResponseFactory.createOkayResponse(response), ExecutionResult.ExecutionStatus.SUCCESSFUL);
