@@ -5,7 +5,7 @@ import io.vertx.core.json.JsonObject;
 /**
  * Created by ashish on 19/1/16.
  */
-public class EventBuilderFactory {
+public final class EventBuilderFactory {
 
   private static final String EVT_COLLECTION_CREATE = "event.collection.create";
   private static final String EVT_COLLECTION_UPDATE = "event.collection.update";
@@ -14,6 +14,10 @@ public class EventBuilderFactory {
   private static final String EVENT_NAME = "event.name";
   private static final String EVENT_BODY = "event.body";
   private static final String COLLECTION_ID = "id";
+
+  private EventBuilderFactory() {
+    throw new AssertionError();
+  }
 
   public static EventBuilder getDeleteCollectionEventBuilder(String collectionId) {
     return () -> new JsonObject().put(EVENT_NAME, EVT_COLLECTION_DELETE).put(EVENT_BODY, new JsonObject().put(COLLECTION_ID, collectionId));

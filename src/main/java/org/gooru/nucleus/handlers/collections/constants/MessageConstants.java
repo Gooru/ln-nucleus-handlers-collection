@@ -1,6 +1,6 @@
 package org.gooru.nucleus.handlers.collections.constants;
 
-public class MessageConstants {
+public final class MessageConstants {
 
   public static final String MSG_HEADER_OP = "mb.operation";
   public static final String MSG_OP_STATUS = "mb.operation.status";
@@ -36,4 +36,7 @@ public class MessageConstants {
   public static final String QUESTION_ID = "questionId";
   public static final String RESOURCE_ID = "resourceId";
 
+  private MessageConstants() {
+    throw new AssertionError();
+  }
 }

@@ -184,7 +184,7 @@ public class DataSourceRegistry implements Initializer, Finalizer {
     }
   }
 
-  private static class Holder {
+  private static final class Holder {
     private static final DataSourceRegistry INSTANCE = new DataSourceRegistry();
   }
 
