@@ -96,7 +96,7 @@ class UpdateCollectionHandler implements DBHandler {
       }
     }
     return new ExecutionResult<>(MessageResponseFactory
-      .createNoContentResponse(resourceBundle.getString("updated"), EventBuilderFactory.getDeleteCollectionEventBuilder(context.collectionId())),
+      .createNoContentResponse(resourceBundle.getString("updated"), EventBuilderFactory.getUpdateCollectionEventBuilder(context.collectionId())),
       ExecutionResult.ExecutionStatus.SUCCESSFUL);
   }
 
