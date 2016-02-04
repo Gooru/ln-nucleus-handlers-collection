@@ -56,7 +56,7 @@ public class AJEntityCollection extends Model {
   public static final String FETCH_QUERY =
     "select id, title, owner_id, creator_id, original_creator_id, original_collection_id, publish_date, thumbnail, learning_objective, audience, " +
       "metadata, taxonomy, orientation, setting, grading, visible_on_profile, collaborator, course_id from collection where id = ?::uuid and format" +
-      " = 'assessment'::content_container_type and is_deleted = false";
+      " = 'collection'::content_container_type and is_deleted = false";
   public static final String COURSE_COLLABORATOR_QUERY = "select collaborator from course where id = ?::uuid and is_deleted = false";
   public static final List<String> FETCH_QUERY_FIELD_LIST = Arrays
     .asList("id", "title", "owner_id", "creator_id", "original_creator_id", "original_collection_id", "publish_date", "thumbnail",
