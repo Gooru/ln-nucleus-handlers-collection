@@ -16,6 +16,7 @@ import java.util.UUID;
 class MessageProcessor implements Processor {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class);
+  private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");
   private final Message<Object> message;
   private String userId;
   private JsonObject prefs;
@@ -155,13 +156,15 @@ class MessageProcessor implements Processor {
   private ExecutionResult<MessageResponse> validateAndInitialize() {
     if (message == null || !(message.body() instanceof JsonObject)) {
       LOGGER.error("Invalid message received, either null or body of message is not JsonObject ");
-      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.message")),
+        ExecutionResult.ExecutionStatus.FAILED);
     }
 
     userId = ((JsonObject) message.body()).getString(MessageConstants.MSG_USER_ID);
     if (!validateUser(userId)) {
       LOGGER.error("Invalid user id passed. Not authorized.");
-      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("missing.user")),
+        ExecutionResult.ExecutionStatus.FAILED);
     }
 
     prefs = ((JsonObject) message.body()).getJsonObject(MessageConstants.MSG_KEY_PREFS);
@@ -169,12 +172,14 @@ class MessageProcessor implements Processor {
 
     if (prefs == null || prefs.isEmpty()) {
       LOGGER.error("Invalid preferences obtained, probably not authorized properly");
-      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("missing.preferences")),
+        ExecutionResult.ExecutionStatus.FAILED);
     }
 
     if (request == null) {
       LOGGER.error("Invalid JSON payload on Message Bus");
-      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.payload")),
+        ExecutionResult.ExecutionStatus.FAILED);
     }
 
     // All is well, continue processing
