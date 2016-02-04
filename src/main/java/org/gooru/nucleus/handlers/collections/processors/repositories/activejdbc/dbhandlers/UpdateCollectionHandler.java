@@ -23,8 +23,8 @@ import java.util.ResourceBundle;
  */
 class UpdateCollectionHandler implements DBHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(UpdateCollectionHandler.class);
-  private final ProcessorContext context;
   private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
+  private final ProcessorContext context;
 
   public UpdateCollectionHandler(ProcessorContext context) {
     this.context = context;
@@ -41,15 +41,18 @@ class UpdateCollectionHandler implements DBHandler {
     // The user should not be anonymous
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
       LOGGER.warn("Anonymous user attempting to edit collection");
-      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")),
+        ExecutionResult.ExecutionStatus.FAILED);
     }
     // Payload should not be empty
     if (context.request() == null || context.request().isEmpty()) {
       LOGGER.warn("Empty payload supplied to edit collection");
-      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("payload.empty")), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("payload.empty")),
+        ExecutionResult.ExecutionStatus.FAILED);
     }
     // Our validators should certify this
-    JsonObject errors = new DefaultPayloadValidator().validatePayload(context.request(), AJEntityCollection.editFieldSelector(), AJEntityCollection.getValidatorRegistry());
+    JsonObject errors = new DefaultPayloadValidator()
+      .validatePayload(context.request(), AJEntityCollection.editFieldSelector(), AJEntityCollection.getValidatorRegistry());
     if (errors != null && !errors.isEmpty()) {
       LOGGER.warn("Validation errors for request");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionResult.ExecutionStatus.FAILED);
@@ -92,8 +95,8 @@ class UpdateCollectionHandler implements DBHandler {
         return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionResult.ExecutionStatus.FAILED);
       }
     }
-    return new ExecutionResult<>(
-      MessageResponseFactory.createNoContentResponse(resourceBundle.getString("updated"), EventBuilderFactory.getDeleteCollectionEventBuilder(context.collectionId())),
+    return new ExecutionResult<>(MessageResponseFactory
+      .createNoContentResponse(resourceBundle.getString("updated"), EventBuilderFactory.getDeleteCollectionEventBuilder(context.collectionId())),
       ExecutionResult.ExecutionStatus.SUCCESSFUL);
   }
 

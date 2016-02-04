@@ -16,11 +16,11 @@ import java.sql.SQLException;
  */
 public final class TransactionExecutor {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(TransactionExecutor.class);
+
   private TransactionExecutor() {
     throw new AssertionError();
   }
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(TransactionExecutor.class);
 
   public static MessageResponse executeTransaction(DBHandler handler) {
     // First validations without any DB

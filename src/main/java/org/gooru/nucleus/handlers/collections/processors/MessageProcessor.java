@@ -18,10 +18,10 @@ class MessageProcessor implements Processor {
   private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class);
   private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");
   private final Message<Object> message;
+  private final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
   private String userId;
   private JsonObject prefs;
   private JsonObject request;
-  private final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
 
   public MessageProcessor(Message<Object> message) {
     this.message = message;

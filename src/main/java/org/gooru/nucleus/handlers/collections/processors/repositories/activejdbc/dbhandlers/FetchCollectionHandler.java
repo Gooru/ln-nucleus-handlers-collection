@@ -23,9 +23,9 @@ import java.util.ResourceBundle;
 class FetchCollectionHandler implements DBHandler {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(FetchCollectionHandler.class);
+  private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
   private final ProcessorContext context;
   private AJEntityCollection collection;
-  private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
 
   public FetchCollectionHandler(ProcessorContext context) {
     this.context = context;

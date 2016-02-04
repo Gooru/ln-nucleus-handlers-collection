@@ -23,7 +23,7 @@ public class AJCollectionRepo implements CollectionRepo {
 
   @Override
   public MessageResponse updateCollection() {
-    return  TransactionExecutor.executeTransaction(DBHandlerBuilder.buildUpdateCollectionHandler(context));
+    return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildUpdateCollectionHandler(context));
   }
 
   @Override

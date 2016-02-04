@@ -17,9 +17,9 @@ import java.util.ResourceBundle;
  */
 public class UpdateCollaboratorAuthorizer implements Authorizer<AJEntityCollection> {
 
+  private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
   private final ProcessorContext context;
   private final Logger LOGGER = LoggerFactory.getLogger(Authorizer.class);
-  private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
 
   UpdateCollaboratorAuthorizer(ProcessorContext context) {
     this.context = context;
@@ -39,8 +39,8 @@ public class UpdateCollaboratorAuthorizer implements Authorizer<AJEntityCollecti
         }
       } catch (DBException e) {
         LOGGER.error("Error checking authorization for update for Collection '{}' for course '{}'", context.collectionId(), course_id, e);
-        return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(
-          resourceBundle.getString("internal.error.authorization.checking")),
+        return new ExecutionResult<>(
+          MessageResponseFactory.createInternalErrorResponse(resourceBundle.getString("internal.error.authorization.checking")),
           ExecutionResult.ExecutionStatus.FAILED);
       }
     } else {
@@ -51,6 +51,7 @@ public class UpdateCollaboratorAuthorizer implements Authorizer<AJEntityCollecti
       }
     }
     LOGGER.warn("User: '{}' is not owner of collection: '{}' or owner/collaborator on course", context.userId(), context.collectionId());
-    return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")), ExecutionResult.ExecutionStatus.FAILED);
+    return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")),
+      ExecutionResult.ExecutionStatus.FAILED);
   }
 }

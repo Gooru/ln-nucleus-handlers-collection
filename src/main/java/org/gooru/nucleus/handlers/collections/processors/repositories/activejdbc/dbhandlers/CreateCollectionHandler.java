@@ -22,9 +22,9 @@ import java.util.ResourceBundle;
  */
 class CreateCollectionHandler implements DBHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(CreateCollectionHandler.class);
+  private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
   private final ProcessorContext context;
   private AJEntityCollection collection;
-  private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
 
   public CreateCollectionHandler(ProcessorContext context) {
     this.context = context;
@@ -35,15 +35,18 @@ class CreateCollectionHandler implements DBHandler {
     // The user should not be anonymous
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
       LOGGER.warn("Anonymous or invalid user attempting to create collection");
-      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")),
+        ExecutionResult.ExecutionStatus.FAILED);
     }
     // Payload should not be empty
     if (context.request() == null || context.request().isEmpty()) {
       LOGGER.warn("Empty payload supplied to create collection");
-      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("payload.empty")), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("payload.empty")),
+        ExecutionResult.ExecutionStatus.FAILED);
     }
     // Our validators should certify this
-    JsonObject errors = new DefaultPayloadValidator().validatePayload(context.request(), AJEntityCollection.createFieldSelector(), AJEntityCollection.getValidatorRegistry());
+    JsonObject errors = new DefaultPayloadValidator()
+      .validatePayload(context.request(), AJEntityCollection.createFieldSelector(), AJEntityCollection.getValidatorRegistry());
     if (errors != null && !errors.isEmpty()) {
       LOGGER.warn("Validation errors for request");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionResult.ExecutionStatus.FAILED);

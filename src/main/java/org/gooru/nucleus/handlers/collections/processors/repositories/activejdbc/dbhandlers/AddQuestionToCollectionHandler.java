@@ -25,8 +25,8 @@ import java.util.ResourceBundle;
  */
 class AddQuestionToCollectionHandler implements DBHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(UpdateCollectionHandler.class);
-  private final ProcessorContext context;
   private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
+  private final ProcessorContext context;
 
   public AddQuestionToCollectionHandler(ProcessorContext context) {
     this.context = context;
@@ -43,12 +43,14 @@ class AddQuestionToCollectionHandler implements DBHandler {
     // The user should not be anonymous
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
       LOGGER.warn("Anonymous user attempting to edit collection");
-      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")),
+        ExecutionResult.ExecutionStatus.FAILED);
     }
     // Payload should not be empty
     if (context.request() == null || context.request().isEmpty()) {
       LOGGER.warn("Empty payload supplied to edit collection");
-      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("payload.empty")), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("payload.empty")),
+        ExecutionResult.ExecutionStatus.FAILED);
     }
     // Our validators should certify this
     JsonObject errors = new DefaultPayloadValidator()
@@ -92,9 +94,8 @@ class AddQuestionToCollectionHandler implements DBHandler {
           this.context.userId());
 
       if (count == 1) {
-        return new ExecutionResult<>(MessageResponseFactory
-          .createNoContentResponse(resourceBundle.getString("question.added"), EventBuilderFactory.getAddQuestionToCollectionEventBuilder(context.collectionId())),
-          ExecutionResult.ExecutionStatus.SUCCESSFUL);
+        return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(resourceBundle.getString("question.added"),
+          EventBuilderFactory.getAddQuestionToCollectionEventBuilder(context.collectionId())), ExecutionResult.ExecutionStatus.SUCCESSFUL);
       }
       LOGGER.error("Something is wrong. Adding question '{}' to collection '{}' updated '{}' rows", this.context.questionId(),
         this.context.collectionId(), count);

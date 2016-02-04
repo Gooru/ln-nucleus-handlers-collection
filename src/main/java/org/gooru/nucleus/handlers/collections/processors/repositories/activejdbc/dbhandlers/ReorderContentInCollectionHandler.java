@@ -28,9 +28,9 @@ import java.util.UUID;
  */
 class ReorderContentInCollectionHandler implements DBHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(ReorderContentInCollectionHandler.class);
+  private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
   private final ProcessorContext context;
   private JsonArray input;
-  private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
 
   public ReorderContentInCollectionHandler(ProcessorContext context) {
     this.context = context;
@@ -117,8 +117,8 @@ class ReorderContentInCollectionHandler implements DBHandler {
         ExecutionResult.ExecutionStatus.FAILED);
     }
 
-    return new ExecutionResult<>(
-      MessageResponseFactory.createNoContentResponse(resourceBundle.getString("updated"), EventBuilderFactory.getUpdateCollectionEventBuilder(context.collectionId())),
+    return new ExecutionResult<>(MessageResponseFactory
+      .createNoContentResponse(resourceBundle.getString("updated"), EventBuilderFactory.getUpdateCollectionEventBuilder(context.collectionId())),
       ExecutionResult.ExecutionStatus.SUCCESSFUL);
 
   }

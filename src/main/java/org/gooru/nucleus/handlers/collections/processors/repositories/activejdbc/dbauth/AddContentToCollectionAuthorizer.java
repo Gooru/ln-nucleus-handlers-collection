@@ -18,9 +18,9 @@ import java.util.ResourceBundle;
  * Created by ashish on 1/2/16.
  */
 public class AddContentToCollectionAuthorizer implements Authorizer<AJEntityCollection> {
+  private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
   private final ProcessorContext context;
   private final Logger LOGGER = LoggerFactory.getLogger(Authorizer.class);
-  private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
 
   public AddContentToCollectionAuthorizer(ProcessorContext context) {
     this.context = context;
@@ -60,7 +60,8 @@ public class AddContentToCollectionAuthorizer implements Authorizer<AJEntityColl
       }
     }
     LOGGER.warn("User: '{}' is not owner/collaborator of collection: '{}' or owner/collaborator on course", context.userId(), context.collectionId());
-    return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")), ExecutionResult.ExecutionStatus.FAILED);
+    return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")),
+      ExecutionResult.ExecutionStatus.FAILED);
   }
 
   private ExecutionResult<MessageResponse> authorizeForContent(AJEntityCollection collection) {

@@ -40,8 +40,8 @@ class UpdateAuthorizer implements Authorizer<AJEntityCollection> {
         }
       } catch (DBException e) {
         LOGGER.error("Error checking authorization for update for Collection '{}' for course '{}'", context.collectionId(), course_id, e);
-        return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(
-          resourceBundle.getString("internal.error.authorization.checking")),
+        return new ExecutionResult<>(
+          MessageResponseFactory.createInternalErrorResponse(resourceBundle.getString("internal.error.authorization.checking")),
           ExecutionResult.ExecutionStatus.FAILED);
       }
     } else {
@@ -60,6 +60,7 @@ class UpdateAuthorizer implements Authorizer<AJEntityCollection> {
       }
     }
     LOGGER.warn("User: '{}' is not owner/collaborator of collection: '{}' or owner/collaborator on course", context.userId(), context.collectionId());
-    return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")), ExecutionResult.ExecutionStatus.FAILED);
+    return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")),
+      ExecutionResult.ExecutionStatus.FAILED);
   }
 }

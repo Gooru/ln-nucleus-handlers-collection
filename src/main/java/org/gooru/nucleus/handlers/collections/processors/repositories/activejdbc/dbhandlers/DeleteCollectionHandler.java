@@ -36,12 +36,14 @@ class DeleteCollectionHandler implements DBHandler {
     // There should be an collection id present
     if (context.collectionId() == null || context.collectionId().isEmpty()) {
       LOGGER.warn("Missing collection id");
-      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(resourceBundle.getString("collection.id.missing")), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(resourceBundle.getString("collection.id.missing")),
+        ExecutionResult.ExecutionStatus.FAILED);
     }
     // The user should not be anonymous
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
       LOGGER.warn("Anonymous user attempting to delete collection");
-      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")),
+        ExecutionResult.ExecutionStatus.FAILED);
     }
 
     return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
@@ -64,7 +66,8 @@ class DeleteCollectionHandler implements DBHandler {
     // This should not be published
     if (collection.getDate(AJEntityCollection.PUBLISH_DATE) != null) {
       LOGGER.warn("Collection with id '{}' is published collection so should not be deleted", context.collectionId());
-      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("collection.published")), ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("collection.published")),
+        ExecutionResult.ExecutionStatus.FAILED);
     }
     return AuthorizerBuilder.buildDeleteAuthorizer(this.context).authorize(collection);
   }
@@ -91,8 +94,8 @@ class DeleteCollectionHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(resourceBundle.getString("contents.delete.error")),
         ExecutionResult.ExecutionStatus.FAILED);
     }
-    return new ExecutionResult<>(
-      MessageResponseFactory.createNoContentResponse(resourceBundle.getString("deleted"), EventBuilderFactory.getDeleteCollectionEventBuilder(context.collectionId())),
+    return new ExecutionResult<>(MessageResponseFactory
+      .createNoContentResponse(resourceBundle.getString("deleted"), EventBuilderFactory.getDeleteCollectionEventBuilder(context.collectionId())),
       ExecutionResult.ExecutionStatus.SUCCESSFUL);
   }
 
