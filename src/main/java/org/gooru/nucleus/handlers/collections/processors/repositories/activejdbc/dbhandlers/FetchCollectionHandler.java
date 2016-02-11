@@ -74,8 +74,8 @@ class FetchCollectionHandler implements DBHandler {
       response.put(AJEntityContent.CONTENT, new JsonArray());
     }
     // Now collaborator, we need to know if we want to get it from course or whatever is in the collection would suffice
-    String course_id = this.collection.getString(AJEntityCollection.COURSE_ID);
-    if (course_id == null || course_id.isEmpty()) {
+    String courseId = this.collection.getString(AJEntityCollection.COURSE_ID);
+    if (courseId == null || courseId.isEmpty()) {
       String collaborators = this.collection.getString(AJEntityCollection.COLLABORATOR);
       if (collaborators == null || collaborators.isEmpty()) {
         response.put(AJEntityCollection.COLLABORATOR, new JsonArray());
@@ -85,14 +85,14 @@ class FetchCollectionHandler implements DBHandler {
     } else {
       try {
         // Need to fetch collaborators
-        Object courseCollaboratorObject = Base.firstCell(AJEntityCollection.COURSE_COLLABORATOR_QUERY, course_id);
+        Object courseCollaboratorObject = Base.firstCell(AJEntityCollection.COURSE_COLLABORATOR_QUERY, courseId);
         if (courseCollaboratorObject != null) {
           response.put(AJEntityCollection.COLLABORATOR, new JsonArray(courseCollaboratorObject.toString()));
         } else {
           response.put(AJEntityCollection.COLLABORATOR, new JsonArray());
         }
       } catch (DBException e) {
-        LOGGER.error("Error trying to get course collaborator for course '{}' to fetch collection '{}'", course_id, this.context.collectionId(), e);
+        LOGGER.error("Error trying to get course collaborator for course '{}' to fetch collection '{}'", courseId, this.context.collectionId(), e);
         return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(resourceBundle.getString("internal.store.error")),
           ExecutionResult.ExecutionStatus.FAILED);
       }
