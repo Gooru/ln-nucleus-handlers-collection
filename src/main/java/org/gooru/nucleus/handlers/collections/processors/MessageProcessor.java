@@ -143,13 +143,13 @@ class MessageProcessor implements Processor {
 
   private ProcessorContext createContextWithQuestion() {
     String collectionId = message.headers().get(MessageConstants.COLLECTION_ID);
-    String questionId = message.headers().get(MessageConstants.QUESTION_ID);
+    String questionId = request.getString(MessageConstants.ID);
     return new ProcessorContext(userId, prefs, request, collectionId, questionId, null);
   }
 
   private ProcessorContext createContextWithResource() {
     String collectionId = message.headers().get(MessageConstants.COLLECTION_ID);
-    String resourceId = message.headers().get(MessageConstants.RESOURCE_ID);
+    String resourceId = request.getString(MessageConstants.RESOURCE_ID);
     return new ProcessorContext(userId, prefs, request, collectionId, null, resourceId);
   }
 

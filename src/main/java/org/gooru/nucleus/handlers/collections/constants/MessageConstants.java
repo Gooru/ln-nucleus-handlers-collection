@@ -36,6 +36,7 @@ public final class MessageConstants {
   public static final String COLLECTION_ID = "collectionId";
   public static final String QUESTION_ID = "questionId";
   public static final String RESOURCE_ID = "resourceId";
+  public static final String ID = "id";
 
   private MessageConstants() {
     throw new AssertionError();
