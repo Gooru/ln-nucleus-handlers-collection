@@ -10,7 +10,8 @@ import java.util.Set;
  */
 public interface PayloadValidator {
 
-  private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");
+  ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");
+
   default JsonObject validatePayload(JsonObject input, FieldSelector selector, ValidatorRegistry registry) {
     JsonObject result = new JsonObject();
     input.forEach(entry -> {
