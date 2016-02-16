@@ -73,7 +73,7 @@ class CreateCollectionHandler implements DBHandler {
 
     boolean result = collection.save();
     if (!result) {
-      LOGGER.error("Collection with id '{}' failed to save", context.collectionId());
+      LOGGER.error("Collection creation failed for user '{}'", context.userId());
       if (collection.hasErrors()) {
         Map<String, String> map = collection.errors();
         JsonObject errors = new JsonObject();
