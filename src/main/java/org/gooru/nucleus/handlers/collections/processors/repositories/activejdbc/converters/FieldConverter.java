@@ -8,12 +8,12 @@ import java.sql.SQLException;
  * Created by ashish on 28/1/16.
  */
 public interface FieldConverter {
-  static PGobject convertFieldToJson(String value) {
+  static PGobject convertFieldToJson(Object value) {
     String JSONB_TYPE = "jsonb";
     PGobject pgObject = new PGobject();
     pgObject.setType(JSONB_TYPE);
     try {
-      pgObject.setValue(value);
+      pgObject.setValue(value == null ? null : String.valueOf(value));
       return pgObject;
     } catch (SQLException e) {
       return null;
@@ -32,11 +32,11 @@ public interface FieldConverter {
     }
   }
 
-  static PGobject convertFieldToNamedType(String value, String type) {
+  static PGobject convertFieldToNamedType(Object value, String type) {
     PGobject pgObject = new PGobject();
     pgObject.setType(type);
     try {
-      pgObject.setValue(value);
+      pgObject.setValue(value == null ? null : String.valueOf(value));
       return pgObject;
     } catch (SQLException e) {
       return null;

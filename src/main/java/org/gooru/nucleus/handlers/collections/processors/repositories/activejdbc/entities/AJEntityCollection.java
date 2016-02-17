@@ -84,15 +84,15 @@ public class AJEntityCollection extends Model {
   private static Map<String, FieldConverter> initializeConverters() {
     Map<String, FieldConverter> converterMap = new HashMap<>();
     converterMap.put(ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
-    converterMap.put(AUDIENCE, (fieldValue -> FieldConverter.convertFieldToJson(fieldValue.toString())));
-    converterMap.put(METADATA, (fieldValue -> FieldConverter.convertFieldToJson(fieldValue.toString())));
-    converterMap.put(TAXONOMY, (fieldValue -> FieldConverter.convertFieldToJson(fieldValue.toString())));
+    converterMap.put(AUDIENCE, (FieldConverter::convertFieldToJson));
+    converterMap.put(METADATA, (FieldConverter::convertFieldToJson));
+    converterMap.put(TAXONOMY, (FieldConverter::convertFieldToJson));
     converterMap.put(CREATOR_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
     converterMap.put(MODIFIER_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
     converterMap.put(OWNER_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
-    converterMap.put(FORMAT, (fieldValue -> FieldConverter.convertFieldToNamedType((String) fieldValue, ASSESSMENT_TYPE_NAME)));
-    converterMap.put(ORIENTATION, (fieldValue -> FieldConverter.convertFieldToNamedType((String) fieldValue, ORIENTATION_TYPE_NAME)));
-    converterMap.put(COLLABORATOR, (fieldValue -> FieldConverter.convertFieldToJson(fieldValue.toString())));
+    converterMap.put(FORMAT, (fieldValue -> FieldConverter.convertFieldToNamedType(fieldValue, ASSESSMENT_TYPE_NAME)));
+    converterMap.put(ORIENTATION, (fieldValue -> FieldConverter.convertFieldToNamedType(fieldValue, ORIENTATION_TYPE_NAME)));
+    converterMap.put(COLLABORATOR, (FieldConverter::convertFieldToJson));
     converterMap.put(GRADING, (fieldValue -> FieldConverter.convertFieldToNamedType((String) fieldValue, GRADING_TYPE_NAME)));
 
     return Collections.unmodifiableMap(converterMap);
