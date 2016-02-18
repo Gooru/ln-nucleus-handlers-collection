@@ -12,6 +12,12 @@ import java.util.List;
 @Table("content")
 public class AJEntityContent extends Model {
 
+  public static final String ADD_QUESTION_QUERY =
+    "update content set collection_id = ?::uuid, modifier_id = ?::uuid, updated_at = now(), sequence_id = ? where id = ?::uuid and is_deleted = " +
+      "false and content_format = 'question'::content_format_type and course_id is null and collection_id is null and creator_id = ?::uuid";
+  public static final String ADD_RESOURCE_QUERY =
+    "update content set collection_id = ?::uuid, modifier_id = ?::uuid, updated_at = now(), sequence_id = ? where id = ?::uuid and is_deleted = " +
+      "false and content_format = 'resource'::content_format_type and course_id is null and collection_id is null and creator_id = ?::uuid";
   public static final String CONTENT_FOR_REORDER_COLLECTION_QUERY = "select id from content where collection_id = ?::uuid and is_deleted = false";
   public static final String REORDER_QUERY =
     "update content set sequence_id = ?, modifier_id = ?::uuid, updated_at = now() where id = ?::uuid and collection_id = ?::uuid and is_deleted = " +

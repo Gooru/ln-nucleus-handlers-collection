@@ -7,7 +7,6 @@ import org.gooru.nucleus.handlers.collections.processors.events.EventBuilderFact
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityCollection;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityContent;
-import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityResource;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.validators.PayloadValidator;
 import org.gooru.nucleus.handlers.collections.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
@@ -90,7 +89,7 @@ class AddResourceToCollectionHandler implements DBHandler {
         sequenceId = currentSequence + 1;
       }
       long count = Base
-        .exec(AJEntityResource.ADD_RESOURCE_QUERY, this.context.collectionId(), this.context.userId(), sequenceId, this.context.resourceId(),
+        .exec(AJEntityContent.ADD_RESOURCE_QUERY, this.context.collectionId(), this.context.userId(), sequenceId, this.context.resourceId(),
           this.context.userId());
       if (count == 1) {
         return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(resourceBundle.getString("resource.added"),

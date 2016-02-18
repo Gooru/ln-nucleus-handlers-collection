@@ -7,7 +7,6 @@ import org.gooru.nucleus.handlers.collections.processors.events.EventBuilderFact
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityCollection;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityContent;
-import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityQuestion;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.validators.PayloadValidator;
 import org.gooru.nucleus.handlers.collections.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
@@ -90,7 +89,7 @@ class AddQuestionToCollectionHandler implements DBHandler {
         sequenceId = currentSequence + 1;
       }
       long count = Base
-        .exec(AJEntityQuestion.ADD_QUESTION_QUERY, this.context.collectionId(), this.context.userId(), sequenceId, this.context.questionId(),
+        .exec(AJEntityContent.ADD_QUESTION_QUERY, this.context.collectionId(), this.context.userId(), sequenceId, this.context.questionId(),
           this.context.userId());
 
       if (count == 1) {
