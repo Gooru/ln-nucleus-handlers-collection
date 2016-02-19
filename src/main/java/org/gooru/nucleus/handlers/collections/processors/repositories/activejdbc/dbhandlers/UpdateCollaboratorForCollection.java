@@ -101,7 +101,7 @@ class UpdateCollaboratorForCollection implements DBHandler {
       }
     }
     return new ExecutionResult<>(MessageResponseFactory
-      .createNoContentResponse(resourceBundle.getString("updated"), EventBuilderFactory.getUpdateCollectionEventBuilder(context.collectionId())),
+      .createNoContentResponse(resourceBundle.getString("updated"), EventBuilderFactory.getUpdateCollaboratorEventBuilder(context.collectionId())),
       ExecutionResult.ExecutionStatus.SUCCESSFUL);
   }
 

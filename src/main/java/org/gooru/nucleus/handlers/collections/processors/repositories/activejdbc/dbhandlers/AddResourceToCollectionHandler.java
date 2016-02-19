@@ -93,7 +93,7 @@ class AddResourceToCollectionHandler implements DBHandler {
           this.context.userId());
       if (count == 1) {
         return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(resourceBundle.getString("resource.added"),
-          EventBuilderFactory.getAddResourceToCollectionEventBuilder(context.collectionId())), ExecutionResult.ExecutionStatus.SUCCESSFUL);
+          EventBuilderFactory.getAddContentToCollectionEventBuilder(context.collectionId())), ExecutionResult.ExecutionStatus.SUCCESSFUL);
       } else {
         LOGGER.error("Something is wrong. Adding resource '{}' to collection '{}' updated '{}' rows", this.context.resourceId(),
           this.context.collectionId(), count);

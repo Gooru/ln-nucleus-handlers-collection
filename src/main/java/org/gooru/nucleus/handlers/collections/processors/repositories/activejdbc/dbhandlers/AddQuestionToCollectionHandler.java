@@ -94,7 +94,7 @@ class AddQuestionToCollectionHandler implements DBHandler {
 
       if (count == 1) {
         return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(resourceBundle.getString("question.added"),
-          EventBuilderFactory.getAddQuestionToCollectionEventBuilder(context.collectionId())), ExecutionResult.ExecutionStatus.SUCCESSFUL);
+          EventBuilderFactory.getAddContentToCollectionEventBuilder(context.collectionId())), ExecutionResult.ExecutionStatus.SUCCESSFUL);
       }
       LOGGER.error("Something is wrong. Adding question '{}' to collection '{}' updated '{}' rows", this.context.questionId(),
         this.context.collectionId(), count);
