@@ -17,6 +17,8 @@ import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Timestamp;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 /**
@@ -26,6 +28,7 @@ class AddQuestionToCollectionHandler implements DBHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(UpdateCollectionHandler.class);
   private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
   private final ProcessorContext context;
+  private AJEntityCollection collection;
 
   public AddQuestionToCollectionHandler(ProcessorContext context) {
     this.context = context;
@@ -75,7 +78,7 @@ class AddQuestionToCollectionHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(resourceBundle.getString("collection.id") + context.collectionId()),
         ExecutionResult.ExecutionStatus.FAILED);
     }
-    AJEntityCollection collection = collections.get(0);
+    this.collection = collections.get(0);
     return AuthorizerBuilder.buildAddContentToCollectionAuthorizer(this.context).authorize(collection);
   }
 
@@ -93,12 +96,30 @@ class AddQuestionToCollectionHandler implements DBHandler {
           this.context.userId());
 
       if (count == 1) {
+        this.collection.setTimestamp(AJEntityCollection.UPDATED_AT, new Timestamp(System.currentTimeMillis()));
+        boolean result = this.collection.save();
+        if (!result) {
+          LOGGER.error("Collection with id '{}' failed to update modified timestamp", context.collectionId());
+          if (this.collection.hasErrors()) {
+            Map<String, String> map = this.collection.errors();
+            JsonObject errors = new JsonObject();
+            map.forEach(errors::put);
+            return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionResult.ExecutionStatus.FAILED);
+          }
+        }
+
         return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(resourceBundle.getString("question.added"),
           EventBuilderFactory.getAddContentToCollectionEventBuilder(context.collectionId())), ExecutionResult.ExecutionStatus.SUCCESSFUL);
+      } else if (count == 0) {
+        LOGGER.error("Question '{}' add to collection '{}' failed as question is not available or non existent", this.context.questionId(),
+          this.context.collectionId());
+        return new ExecutionResult<>(
+          MessageResponseFactory.createInternalErrorResponse(resourceBundle.getString("question.not.exists.or.not.available")),
+          ExecutionResult.ExecutionStatus.FAILED);
+      } else {
+        LOGGER.error("Something is wrong. Adding question '{}' to collection '{}' updated '{}' rows", this.context.questionId(),
+          this.context.collectionId(), count);
       }
-      LOGGER.error("Something is wrong. Adding question '{}' to collection '{}' updated '{}' rows", this.context.questionId(),
-        this.context.collectionId(), count);
-
     } catch (DBException e) {
       LOGGER.error("Not able to add question '{}' to collection '{}'", this.context.questionId(), this.context.collectionId(), e);
       return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(resourceBundle.getString("internal.store.error")),

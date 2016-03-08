@@ -149,7 +149,7 @@ class MessageProcessor implements Processor {
 
   private ProcessorContext createContextWithResource() {
     String collectionId = message.headers().get(MessageConstants.COLLECTION_ID);
-    String resourceId = request.getString(MessageConstants.RESOURCE_ID);
+    String resourceId = request.getString(MessageConstants.ID);
     return new ProcessorContext(userId, prefs, request, collectionId, null, resourceId);
   }
 
@@ -201,7 +201,7 @@ class MessageProcessor implements Processor {
 
   private boolean validateContext(ProcessorContext context, boolean shouldHaveQuestion, boolean shouldHaveResource) {
     if (!validateId(context.collectionId())) {
-      LOGGER.error("Invalid request, assessment id not available/incorrect format. Aborting");
+      LOGGER.error("Invalid request, collection id not available/incorrect format. Aborting");
       return false;
     }
     if (shouldHaveQuestion) {
@@ -211,7 +211,7 @@ class MessageProcessor implements Processor {
       }
     }
     if (shouldHaveResource) {
-      if (!validateId(context.questionId())) {
+      if (!validateId(context.resourceId())) {
         LOGGER.error("Invalid request, resource id not available/incorrect format. Aborting");
         return false;
       }

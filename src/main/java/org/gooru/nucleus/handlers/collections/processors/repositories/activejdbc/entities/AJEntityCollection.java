@@ -39,6 +39,7 @@ public class AJEntityCollection extends Model {
   public static final String COURSE_ID = "course_id";
   public static final String GRADING = "grading";
   public static final String TABLE_COURSE = "course";
+  public static final String UPDATED_AT = "updated_at";
   public static final String UUID_TYPE = "uuid";
   public static final String JSONB_TYPE = "jsonb";
   public static final String ASSESSMENT_TYPE_NAME = "content_container_type";
@@ -67,6 +68,7 @@ public class AJEntityCollection extends Model {
   public static final Set<String> CREATABLE_FIELDS = EDITABLE_FIELDS;
   public static final Set<String> MANDATORY_FIELDS = new HashSet<>(Arrays.asList(TITLE));
   public static final Set<String> ADD_QUESTION_FIELDS = new HashSet<>(Arrays.asList(ID));
+  public static final Set<String> ADD_RESOURCE_FIELDS = ADD_QUESTION_FIELDS;
   public static final Set<String> COLLABORATOR_FIELDS = new HashSet<>(Arrays.asList(COLLABORATOR));
   public static final Set<String> REORDER_FIELDS = new HashSet<>(Arrays.asList(REORDER_PAYLOAD_KEY));
 
@@ -169,8 +171,7 @@ public class AJEntityCollection extends Model {
 
 
   public static FieldSelector addResourceFieldSelector() {
-    // FIXME: 2/2/16 Correct values should be returned instead of null
-    return null;
+    return () -> Collections.unmodifiableSet(ADD_RESOURCE_FIELDS);
   }
 
   public static ValidatorRegistry getValidatorRegistry() {

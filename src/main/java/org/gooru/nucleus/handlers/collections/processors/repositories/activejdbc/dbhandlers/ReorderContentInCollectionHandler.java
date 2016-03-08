@@ -19,7 +19,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.PreparedStatement;
+import java.sql.Timestamp;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.UUID;
 
@@ -31,6 +33,7 @@ class ReorderContentInCollectionHandler implements DBHandler {
   private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
   private final ProcessorContext context;
   private JsonArray input;
+  AJEntityCollection collection;
 
   public ReorderContentInCollectionHandler(ProcessorContext context) {
     this.context = context;
@@ -77,7 +80,7 @@ class ReorderContentInCollectionHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(resourceBundle.getString("collection.id") + context.collectionId()),
         ExecutionResult.ExecutionStatus.FAILED);
     }
-    AJEntityCollection collection = collections.get(0);
+    this.collection = collections.get(0);
     try {
       List idList = Base.firstColumn(AJEntityContent.CONTENT_FOR_REORDER_COLLECTION_QUERY, this.context.collectionId());
       this.input = this.context.request().getJsonArray(AJEntityCollection.REORDER_PAYLOAD_KEY);
@@ -110,6 +113,17 @@ class ReorderContentInCollectionHandler implements DBHandler {
         Base.addBatch(ps, sequenceId, this.context.userId(), payloadId, context.collectionId());
       }
       Base.executeBatch(ps);
+      this.collection.setTimestamp(AJEntityCollection.UPDATED_AT, new Timestamp(System.currentTimeMillis()));
+      boolean result = this.collection.save();
+      if (!result) {
+        LOGGER.error("Collection with id '{}' failed to save modified time stamp", context.collectionId());
+        if (this.collection.hasErrors()) {
+          Map<String, String> map = this.collection.errors();
+          JsonObject errors = new JsonObject();
+          map.forEach(errors::put);
+          return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionResult.ExecutionStatus.FAILED);
+        }
+      }
     } catch (DBException | ClassCastException e) {
       // No special handling for CCE as this could have been thrown in the validation itself
       LOGGER.error("Not able to update the sequences for collection '{}'", context.collectionId(), e);
