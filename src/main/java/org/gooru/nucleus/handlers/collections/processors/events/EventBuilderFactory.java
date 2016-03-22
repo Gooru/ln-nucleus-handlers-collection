@@ -11,7 +11,7 @@ public final class EventBuilderFactory {
   private static final String EVT_COLLECTION_UPDATE = "event.collection.update";
   private static final String EVT_COLLECTION_DELETE = "event.collection.delete";
   private static final String EVT_COLLECTION_CONTENT_ADD = "event.collection.content.add";
-  private static final String EVT_COLLECTION_REORDER = "event.collection.reorder";
+  private static final String EVT_COLLECTION_REORDER = "event.collection.content.reorder";
   private static final String EVT_COLLECTION_COLLABORATOR_UPDATE = "event.collection.collaborator.update";
   private static final String EVENT_NAME = "event.name";
   private static final String EVENT_BODY = "event.body";
