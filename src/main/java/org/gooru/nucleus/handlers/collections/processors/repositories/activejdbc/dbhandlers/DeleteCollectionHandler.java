@@ -63,11 +63,9 @@ class DeleteCollectionHandler implements DBHandler {
         ExecutionResult.ExecutionStatus.FAILED);
     }
     AJEntityCollection collection = collections.get(0);
-    // This should not be published
+    // Log a warning if it is published
     if (collection.getDate(AJEntityCollection.PUBLISH_DATE) != null) {
-      LOGGER.warn("Collection with id '{}' is published collection so should not be deleted", context.collectionId());
-      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("collection.published")),
-        ExecutionResult.ExecutionStatus.FAILED);
+      LOGGER.warn("Collection with id '{}' is published collection but it is being deleted", context.collectionId());
     }
     return AuthorizerBuilder.buildDeleteAuthorizer(this.context).authorize(collection);
   }
