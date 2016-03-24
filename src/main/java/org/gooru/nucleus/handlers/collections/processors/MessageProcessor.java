@@ -18,7 +18,6 @@ class MessageProcessor implements Processor {
   private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class);
   private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");
   private final Message<Object> message;
-  private final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
   private String userId;
   private JsonObject prefs;
   private JsonObject request;
@@ -65,7 +64,7 @@ class MessageProcessor implements Processor {
           break;
         default:
           LOGGER.error("Invalid operation type passed in, not able to handle");
-          return MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("operation.invalid"));
+          return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("operation.invalid"));
       }
       return result;
     } catch (Throwable e) {
@@ -77,7 +76,7 @@ class MessageProcessor implements Processor {
   private MessageResponse processCollectionContentReorder() {
     ProcessorContext context = createContext();
     if (!validateContext(context)) {
-      return MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("collection.id.invalid"));
+      return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("collection.id.invalid"));
     }
     return RepoBuilder.buildCollectionRepo(context).reorderContentInCollection();
   }
@@ -85,7 +84,7 @@ class MessageProcessor implements Processor {
   private MessageResponse processCollectionCollaboratorUpdate() {
     ProcessorContext context = createContext();
     if (!validateContext(context)) {
-      return MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("collection.id.invalid"));
+      return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("collection.id.invalid"));
     }
     return RepoBuilder.buildCollectionRepo(context).updateCollaborator();
   }
@@ -93,7 +92,7 @@ class MessageProcessor implements Processor {
   private MessageResponse processCollectionAddQuestion() {
     ProcessorContext context = createContextWithQuestion();
     if (!validateContextWithQuestion(context)) {
-      return MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("collection.question.id.invalid"));
+      return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("collection.question.id.invalid"));
     }
     return RepoBuilder.buildCollectionRepo(context).addQuestionToCollection();
   }
@@ -101,7 +100,7 @@ class MessageProcessor implements Processor {
   private MessageResponse processCollectionAddResource() {
     ProcessorContext context = createContextWithResource();
     if (!validateContextWithResource(context)) {
-      return MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("collection.resource.id.invalid"));
+      return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("collection.resource.id.invalid"));
     }
     return RepoBuilder.buildCollectionRepo(context).addResourceToCollection();
   }
@@ -109,7 +108,7 @@ class MessageProcessor implements Processor {
   private MessageResponse processCollectionDelete() {
     ProcessorContext context = createContext();
     if (!validateContext(context)) {
-      return MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("collection.id.invalid"));
+      return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("collection.id.invalid"));
     }
     return RepoBuilder.buildCollectionRepo(context).deleteCollection();
   }
@@ -117,7 +116,7 @@ class MessageProcessor implements Processor {
   private MessageResponse processCollectionUpdate() {
     ProcessorContext context = createContext();
     if (!validateContext(context)) {
-      return MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("collection.id.invalid"));
+      return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("collection.id.invalid"));
     }
     return RepoBuilder.buildCollectionRepo(context).updateCollection();
   }
@@ -125,7 +124,7 @@ class MessageProcessor implements Processor {
   private MessageResponse processCollectionGet() {
     ProcessorContext context = createContext();
     if (!validateContext(context)) {
-      return MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("collection.id.invalid"));
+      return MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("collection.id.invalid"));
     }
     return RepoBuilder.buildCollectionRepo(context).fetchCollection();
   }

@@ -41,4 +41,12 @@ public class AJEntityContent extends Model {
       "metadata", "taxonomy", "depth_of_knowledge", "hint_explanation_detail", "thumbnail", "sequence_id", "is_copyright_owner", "visible_on_profile",
       "display_guide");
   public static final String CONTENT = "content";
+  public static final String ORIGINAL_CONTENT_ID = "original_content_id";
+  public static final String PARENT_CONTENT_ID = "parent_content_id";
+
+  public boolean isContentOriginal() {
+    String originalContentId = this.getString(ORIGINAL_CONTENT_ID);
+    String parentContentId = this.getString(PARENT_CONTENT_ID);
+    return originalContentId == null && parentContentId == null;
+  }
 }

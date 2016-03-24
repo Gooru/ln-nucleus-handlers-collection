@@ -9,6 +9,7 @@ import org.gooru.nucleus.handlers.collections.processors.responses.MessageRespon
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponseFactory;
 import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.DBException;
+import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,11 +66,18 @@ public class AddContentToCollectionAuthorizer implements Authorizer<AJEntityColl
   }
 
   private ExecutionResult<MessageResponse> authorizeForContent(AJEntityCollection collection) {
-    //           return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
     try {
-      long count = Base.count(AJEntityContent.TABLE_CONTENT, AJEntityContent.CONTENT_FOR_ADD_FILTER,
-        context.questionId() != null ? context.questionId() : context.resourceId(), context.userId());
-      if (count == 1) {
+      boolean contentIsResource = context.resourceId() != null && !context.resourceId().isEmpty();
+      LazyList<AJEntityContent> contents = AJEntityContent
+        .where(AJEntityContent.CONTENT_FOR_ADD_FILTER, contentIsResource ? context.resourceId() : context.questionId(), context.userId());
+      if (contents.size() == 1) {
+        if (contentIsResource) {
+          if (contents.get(0).isContentOriginal()) {
+            LOGGER.warn("Resource '{}' being added to collection '{}' is not a reference but original", context.resourceId(), context.collectionId());
+            return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("resource.reference.needed")),
+              ExecutionResult.ExecutionStatus.FAILED);
+          }
+        }
         return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
       }
     } catch (DBException e) {
