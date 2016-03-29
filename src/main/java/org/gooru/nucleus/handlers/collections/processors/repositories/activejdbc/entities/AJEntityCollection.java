@@ -37,6 +37,8 @@ public class AJEntityCollection extends Model {
   public static final String VISIBLE_ON_PROFILE = "visible_on_profile";
   public static final String COLLABORATOR = "collaborator";
   public static final String COURSE_ID = "course_id";
+  public static final String UNIT_ID = "unit_id";
+  public static final String LESSON_ID = "lesson_id";
   public static final String GRADING = "grading";
   public static final String TABLE_COURSE = "course";
   public static final String UPDATED_AT = "updated_at";
@@ -50,8 +52,8 @@ public class AJEntityCollection extends Model {
 
   // Queries used
   public static final String AUTHORIZER_QUERY =
-    "select id, course_id, owner_id, creator_id, publish_date, collaborator, grading from collection where format = ?::content_container_type and " +
-      "id = ?::uuid and is_deleted = ?";
+    "select id, course_id, unit_id, lesson_id, owner_id, creator_id, publish_date, collaborator, grading from collection where format = " +
+      "?::content_container_type and id = ?::uuid and is_deleted = ?";
 
   public static final String AUTH_FILTER = "id = ?::uuid and (owner_id = ?::uuid or collaborator ?? ?);";
   public static final String FETCH_QUERY =

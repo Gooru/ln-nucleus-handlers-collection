@@ -91,9 +91,9 @@ class AddQuestionToCollectionHandler implements DBHandler {
         int currentSequence = Integer.valueOf(sequence.toString());
         sequenceId = currentSequence + 1;
       }
-      long count = Base
-        .exec(AJEntityContent.ADD_QUESTION_QUERY, this.context.collectionId(), this.context.userId(), sequenceId, this.context.questionId(),
-          this.context.userId());
+      long count = Base.exec(AJEntityContent.ADD_QUESTION_QUERY, this.context.collectionId(), this.collection.getString(AJEntityCollection.COURSE_ID),
+        this.collection.getString(AJEntityCollection.UNIT_ID), this.collection.getString(AJEntityCollection.LESSON_ID), this.context.userId(),
+        sequenceId, this.context.questionId(), this.context.userId());
 
       if (count == 1) {
         this.collection.setTimestamp(AJEntityCollection.UPDATED_AT, new Timestamp(System.currentTimeMillis()));
