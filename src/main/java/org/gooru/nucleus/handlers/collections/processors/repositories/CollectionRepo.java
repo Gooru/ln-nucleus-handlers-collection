@@ -6,20 +6,20 @@ import org.gooru.nucleus.handlers.collections.processors.responses.MessageRespon
  * Created by ashish on 11/1/16.
  */
 public interface CollectionRepo {
-  MessageResponse deleteCollection();
+    MessageResponse deleteCollection();
 
-  MessageResponse updateCollection();
+    MessageResponse updateCollection();
 
-  MessageResponse fetchCollection();
+    MessageResponse fetchCollection();
 
-  MessageResponse createCollection();
+    MessageResponse createCollection();
 
-  MessageResponse reorderContentInCollection();
+    MessageResponse reorderContentInCollection();
 
-  MessageResponse updateCollaborator();
+    MessageResponse updateCollaborator();
 
-  MessageResponse addQuestionToCollection();
+    MessageResponse addQuestionToCollection();
 
-  MessageResponse addResourceToCollection();
+    MessageResponse addResourceToCollection();
 
 }

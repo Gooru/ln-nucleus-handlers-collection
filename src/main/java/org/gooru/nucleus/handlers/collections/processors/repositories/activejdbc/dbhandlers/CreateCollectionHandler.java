@@ -1,6 +1,8 @@
 package org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbhandlers;
 
-import io.vertx.core.json.JsonObject;
+import java.util.Map;
+import java.util.ResourceBundle;
+
 import org.gooru.nucleus.handlers.collections.constants.MessageConstants;
 import org.gooru.nucleus.handlers.collections.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.collections.processors.events.EventBuilderFactory;
@@ -14,85 +16,93 @@ import org.gooru.nucleus.handlers.collections.processors.responses.MessageRespon
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-import java.util.ResourceBundle;
+import io.vertx.core.json.JsonObject;
 
 /**
  * Created by ashish on 12/1/16.
  */
 class CreateCollectionHandler implements DBHandler {
-  private static final Logger LOGGER = LoggerFactory.getLogger(CreateCollectionHandler.class);
-  private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
-  private final ProcessorContext context;
-  private AJEntityCollection collection;
+    private static final Logger LOGGER = LoggerFactory.getLogger(CreateCollectionHandler.class);
+    private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
+    private final ProcessorContext context;
+    private AJEntityCollection collection;
 
-  public CreateCollectionHandler(ProcessorContext context) {
-    this.context = context;
-  }
-
-  @Override
-  public ExecutionResult<MessageResponse> checkSanity() {
-    // The user should not be anonymous
-    if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
-      LOGGER.warn("Anonymous or invalid user attempting to create collection");
-      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")),
-        ExecutionResult.ExecutionStatus.FAILED);
+    public CreateCollectionHandler(ProcessorContext context) {
+        this.context = context;
     }
-    // Payload should not be empty
-    if (context.request() == null || context.request().isEmpty()) {
-      LOGGER.warn("Empty payload supplied to create collection");
-      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("payload.empty")),
-        ExecutionResult.ExecutionStatus.FAILED);
+
+    @Override
+    public ExecutionResult<MessageResponse> checkSanity() {
+        // The user should not be anonymous
+        if (context.userId() == null || context.userId().isEmpty()
+            || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
+            LOGGER.warn("Anonymous or invalid user attempting to create collection");
+            return new ExecutionResult<>(
+                MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")),
+                ExecutionResult.ExecutionStatus.FAILED);
+        }
+        // Payload should not be empty
+        if (context.request() == null || context.request().isEmpty()) {
+            LOGGER.warn("Empty payload supplied to create collection");
+            return new ExecutionResult<>(
+                MessageResponseFactory.createInvalidRequestResponse(resourceBundle.getString("payload.empty")),
+                ExecutionResult.ExecutionStatus.FAILED);
+        }
+        // Our validators should certify this
+        JsonObject errors = new DefaultPayloadValidator().validatePayload(context.request(),
+            AJEntityCollection.createFieldSelector(), AJEntityCollection.getValidatorRegistry());
+        if (errors != null && !errors.isEmpty()) {
+            LOGGER.warn("Validation errors for request");
+            return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors),
+                ExecutionResult.ExecutionStatus.FAILED);
+        }
+        return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
     }
-    // Our validators should certify this
-    JsonObject errors = new DefaultPayloadValidator()
-      .validatePayload(context.request(), AJEntityCollection.createFieldSelector(), AJEntityCollection.getValidatorRegistry());
-    if (errors != null && !errors.isEmpty()) {
-      LOGGER.warn("Validation errors for request");
-      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionResult.ExecutionStatus.FAILED);
+
+    @Override
+    public ExecutionResult<MessageResponse> validateRequest() {
+        // Only thing to do here is to authorize
+        return AuthorizerBuilder.buildCreateAuthorizer(context).authorize(this.collection);
     }
-    return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
-  }
 
-  @Override
-  public ExecutionResult<MessageResponse> validateRequest() {
-    // Only thing to do here is to authorize
-    return AuthorizerBuilder.buildCreateAuthorizer(context).authorize(this.collection);
-  }
+    @Override
+    public ExecutionResult<MessageResponse> executeRequest() {
+        AJEntityCollection collection = new AJEntityCollection();
+        // First time creation is standalone, no course exists. It will be
+        // associated later, if the need arises. So all user ids are same
+        collection.setModifierId(context.userId());
+        collection.setOwnerId(context.userId());
+        collection.setCreatorId(context.userId());
+        collection.setTypeCollection();
+        // Now auto populate is done, we need to setup the converter machinery
+        new DefaultAJEntityCollectionEntityBuilder().build(collection, context.request(),
+            AJEntityCollection.getConverterRegistry());
 
-  @Override
-  public ExecutionResult<MessageResponse> executeRequest() {
-    AJEntityCollection collection = new AJEntityCollection();
-    // First time creation is standalone, no course exists. It will be associated later, if the need arises. So all user ids are same
-    collection.setModifierId(context.userId());
-    collection.setOwnerId(context.userId());
-    collection.setCreatorId(context.userId());
-    collection.setTypeCollection();
-    // Now auto populate is done, we need to setup the converter machinery
-    new DefaultAJEntityCollectionEntityBuilder().build(collection, context.request(), AJEntityCollection.getConverterRegistry());
-
-    boolean result = collection.save();
-    if (!result) {
-      LOGGER.error("Collection creation failed for user '{}'", context.userId());
-      if (collection.hasErrors()) {
-        Map<String, String> map = collection.errors();
-        JsonObject errors = new JsonObject();
-        map.forEach(errors::put);
-        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionResult.ExecutionStatus.FAILED);
-      }
+        boolean result = collection.save();
+        if (!result) {
+            LOGGER.error("Collection creation failed for user '{}'", context.userId());
+            if (collection.hasErrors()) {
+                Map<String, String> map = collection.errors();
+                JsonObject errors = new JsonObject();
+                map.forEach(errors::put);
+                return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors),
+                    ExecutionResult.ExecutionStatus.FAILED);
+            }
+        }
+        return new ExecutionResult<>(
+            MessageResponseFactory.createCreatedResponse(collection.getId().toString(),
+                EventBuilderFactory.getCreateCollectionEventBuilder(collection.getString(AJEntityCollection.ID))),
+            ExecutionResult.ExecutionStatus.SUCCESSFUL);
     }
-    return new ExecutionResult<>(MessageResponseFactory.createCreatedResponse(collection.getId().toString(),
-      EventBuilderFactory.getCreateCollectionEventBuilder(collection.getString(AJEntityCollection.ID))), ExecutionResult.ExecutionStatus.SUCCESSFUL);
-  }
 
-  @Override
-  public boolean handlerReadOnly() {
-    return false;
-  }
+    @Override
+    public boolean handlerReadOnly() {
+        return false;
+    }
 
-  private static class DefaultPayloadValidator implements PayloadValidator {
-  }
+    private static class DefaultPayloadValidator implements PayloadValidator {
+    }
 
-  private static class DefaultAJEntityCollectionEntityBuilder implements EntityBuilder<AJEntityCollection> {
-  }
+    private static class DefaultAJEntityCollectionEntityBuilder implements EntityBuilder<AJEntityCollection> {
+    }
 }
