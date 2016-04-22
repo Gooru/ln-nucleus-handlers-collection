@@ -55,6 +55,7 @@ public class AJEntityCollection extends Model {
     public static final String ORIENTATION_TYPE_NAME = "orientation_type";
     public static final String GRADING_TYPE_NAME = "grading_type";
     public static final String REORDER_PAYLOAD_KEY = "order";
+    public static final String LICENSE = "license";
 
     // Queries used
     public static final String AUTHORIZER_QUERY =
@@ -63,14 +64,14 @@ public class AJEntityCollection extends Model {
 
     public static final String AUTH_FILTER = "id = ?::uuid and (owner_id = ?::uuid or collaborator ?? ?);";
     public static final String FETCH_QUERY =
-        "select id, title, owner_id, creator_id, original_creator_id, original_collection_id, publish_date, thumbnail, learning_objective, audience, "
-            + "metadata, taxonomy, orientation, setting, grading, visible_on_profile, collaborator, course_id from collection where id = ?::uuid and format"
-            + " = 'collection'::content_container_type and is_deleted = false";
+        "select id, title, owner_id, creator_id, original_creator_id, original_collection_id, publish_date, thumbnail, learning_objective, "
+            + "audience, license, metadata, taxonomy, orientation, setting, grading, visible_on_profile, collaborator, course_id from collection "
+            + "where id = ?::uuid and format = 'collection'::content_container_type and is_deleted = false";
     public static final String COURSE_COLLABORATOR_QUERY =
         "select collaborator from course where id = ?::uuid and is_deleted = false";
     public static final List<String> FETCH_QUERY_FIELD_LIST = Arrays.asList("id", "title", "owner_id", "creator_id",
         "original_creator_id", "original_collection_id", "publish_date", "thumbnail", "learning_objective", "audience",
-        "metadata", "taxonomy", "orientation", "setting", "grading", "visible_on_profile");
+        "license", "metadata", "taxonomy", "orientation", "setting", "grading", "visible_on_profile");
 
     public static final Set<String> EDITABLE_FIELDS = new HashSet<>(Arrays.asList(TITLE, THUMBNAIL, LEARNING_OBJECTIVE,
         AUDIENCE, METADATA, TAXONOMY, ORIENTATION, URL, LOGIN_REQUIRED, VISIBLE_ON_PROFILE));
@@ -107,7 +108,7 @@ public class AJEntityCollection extends Model {
             (fieldValue -> FieldConverter.convertFieldToNamedType(fieldValue, ORIENTATION_TYPE_NAME)));
         converterMap.put(COLLABORATOR, (FieldConverter::convertFieldToJson));
         converterMap.put(GRADING,
-            (fieldValue -> FieldConverter.convertFieldToNamedType((String) fieldValue, GRADING_TYPE_NAME)));
+            (fieldValue -> FieldConverter.convertFieldToNamedType(fieldValue, GRADING_TYPE_NAME)));
 
         return Collections.unmodifiableMap(converterMap);
     }
@@ -122,7 +123,7 @@ public class AJEntityCollection extends Model {
         validatorMap.put(METADATA, FieldValidator::validateJsonIfPresent);
         validatorMap.put(TAXONOMY, FieldValidator::validateJsonIfPresent);
         validatorMap.put(ORIENTATION,
-            (value) -> (value != null && value instanceof String
+            (value) -> ((value != null) && (value instanceof String)
                 && (ORIENTATION_STUDENT.equalsIgnoreCase((String) value)
                     || ORIENTATION_TEACHER.equalsIgnoreCase((String) value))));
         validatorMap.put(URL, (value) -> FieldValidator.validateStringIfPresent(value, 2000));
@@ -232,13 +233,8 @@ public class AJEntityCollection extends Model {
         }
     }
 
-    public void setGrading(String grading) {
-        FieldConverter fc = converterRegistry.get(GRADING);
-        if (fc != null) {
-            this.set(GRADING, fc.convertField(grading));
-        } else {
-            this.set(ID, grading);
-        }
+    public void setLicense(Integer code) {
+        this.set(LICENSE, code);
     }
 
     public void setTypeCollection() {
