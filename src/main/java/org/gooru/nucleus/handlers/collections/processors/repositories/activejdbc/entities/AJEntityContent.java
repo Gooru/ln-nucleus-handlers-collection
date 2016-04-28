@@ -36,12 +36,11 @@ public class AJEntityContent extends Model {
         "update content set is_deleted = true, modifier_id = ?::uuid, updated_at = now()  where collection_id = ?::uuid and is_deleted = false";
     public static final String FETCH_CONTENT_SUMMARY_QUERY =
         "select id, title, url, creator_id, original_creator_id, publish_date, short_title, content_format, content_subformat, answer, metadata, "
-            + "taxonomy, "
-            + "depth_of_knowledge, hint_explanation_detail, thumbnail, sequence_id, is_copyright_owner, visible_on_profile, display_guide from content "
+            + "taxonomy, hint_explanation_detail, thumbnail, sequence_id, is_copyright_owner, visible_on_profile, display_guide from content "
             + "where collection_id = ?::uuid and " + " is_deleted = false order by sequence_id asc";
     public static final List<String> FETCH_CONTENT_SUMMARY_FIELDS = Arrays.asList("id", "title", "url", "creator_id",
         "original_creator_id", "publish_date", "short_title", "content_format", "content_subformat", "answer",
-        "metadata", "taxonomy", "depth_of_knowledge", "hint_explanation_detail", "thumbnail", "sequence_id",
+        "metadata", "taxonomy", "hint_explanation_detail", "thumbnail", "sequence_id",
         "is_copyright_owner", "visible_on_profile", "display_guide");
     public static final String CONTENT = "content";
     public static final String ORIGINAL_CONTENT_ID = "original_content_id";
