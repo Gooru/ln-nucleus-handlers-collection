@@ -122,7 +122,8 @@ class AddResourceToCollectionHandler implements DBHandler {
 
                 return new ExecutionResult<>(
                     MessageResponseFactory.createNoContentResponse(resourceBundle.getString("resource.added"),
-                        EventBuilderFactory.getAddContentToCollectionEventBuilder(context.collectionId())),
+                        EventBuilderFactory.getAddContentToCollectionEventBuilder(context.collectionId(),
+                            context.resourceId())),
                     ExecutionResult.ExecutionStatus.SUCCESSFUL);
             } else if (count == 0) {
                 LOGGER.error("Resource '{}' add to collection '{}' failed as question is not available or non existent",

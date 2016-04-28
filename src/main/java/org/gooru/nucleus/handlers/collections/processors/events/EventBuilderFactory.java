@@ -16,6 +16,7 @@ public final class EventBuilderFactory {
     private static final String EVENT_NAME = "event.name";
     private static final String EVENT_BODY = "event.body";
     private static final String COLLECTION_ID = "id";
+    private static final String CONTENT_ID = "content.id";
 
     private EventBuilderFactory() {
         throw new AssertionError();
@@ -36,9 +37,9 @@ public final class EventBuilderFactory {
             new JsonObject().put(COLLECTION_ID, collectionId));
     }
 
-    public static EventBuilder getAddContentToCollectionEventBuilder(String collectionId) {
+    public static EventBuilder getAddContentToCollectionEventBuilder(String collectionId, String contentId) {
         return () -> new JsonObject().put(EVENT_NAME, EVT_COLLECTION_CONTENT_ADD).put(EVENT_BODY,
-            new JsonObject().put(COLLECTION_ID, collectionId));
+            new JsonObject().put(COLLECTION_ID, collectionId).put(CONTENT_ID, contentId));
     }
 
     public static EventBuilder getReorderContentEventBuilder(String collectionId) {

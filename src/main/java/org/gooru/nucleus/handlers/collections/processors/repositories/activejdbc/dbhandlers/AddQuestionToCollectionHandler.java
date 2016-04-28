@@ -123,7 +123,8 @@ class AddQuestionToCollectionHandler implements DBHandler {
 
                 return new ExecutionResult<>(
                     MessageResponseFactory.createNoContentResponse(resourceBundle.getString("question.added"),
-                        EventBuilderFactory.getAddContentToCollectionEventBuilder(context.collectionId())),
+                        EventBuilderFactory.getAddContentToCollectionEventBuilder(context.collectionId(),
+                            context.questionId())),
                     ExecutionResult.ExecutionStatus.SUCCESSFUL);
             } else if (count == 0) {
                 LOGGER.error("Question '{}' add to collection '{}' failed as question is not available or non existent",
