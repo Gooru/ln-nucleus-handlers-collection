@@ -1,12 +1,6 @@
 package org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.converters.ConverterRegistry;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.converters.FieldConverter;
@@ -40,6 +34,7 @@ public class AJEntityCollection extends Model {
     public static final String LOGIN_REQUIRED = "login_required";
     public static final String VISIBLE_ON_PROFILE = "visible_on_profile";
     public static final String COLLABORATOR = "collaborator";
+    public static final String SETTING = "setting";
     public static final String COURSE_ID = "course_id";
     public static final String UNIT_ID = "unit_id";
     public static final String LESSON_ID = "lesson_id";
@@ -56,22 +51,25 @@ public class AJEntityCollection extends Model {
 
     // Queries used
     public static final String AUTHORIZER_QUERY =
-        "select id, course_id, unit_id, lesson_id, owner_id, creator_id, publish_date, collaborator, grading from collection where format = "
-            + "?::content_container_type and id = ?::uuid and is_deleted = ?";
+        "select id, course_id, unit_id, lesson_id, owner_id, creator_id, publish_date, collaborator, grading from "
+            + "collection where format = ?::content_container_type and id = ?::uuid and is_deleted = ?";
 
     public static final String AUTH_FILTER = "id = ?::uuid and (owner_id = ?::uuid or collaborator ?? ?);";
     public static final String FETCH_QUERY =
-        "select id, title, owner_id, creator_id, original_creator_id, original_collection_id, publish_date, thumbnail, learning_objective, "
-            + "license, metadata, taxonomy, setting, grading, visible_on_profile, collaborator, course_id from collection "
-            + "where id = ?::uuid and format = 'collection'::content_container_type and is_deleted = false";
+        "select id, title, owner_id, creator_id, original_creator_id, original_collection_id, publish_date, "
+            + "thumbnail, learning_objective, license, metadata, taxonomy, setting, grading, visible_on_profile, "
+            + "collaborator, course_id, unit_id, lesson_id from collection where id = ?::uuid and format = "
+            + "'collection'::content_container_type and is_deleted = false";
     public static final String COURSE_COLLABORATOR_QUERY =
         "select collaborator from course where id = ?::uuid and is_deleted = false";
-    public static final List<String> FETCH_QUERY_FIELD_LIST = Arrays.asList("id", "title", "owner_id", "creator_id",
-        "original_creator_id", "original_collection_id", "publish_date", "thumbnail", "learning_objective",
-        "license", "metadata", "taxonomy", "setting", "grading", "visible_on_profile");
+    public static final List<String> FETCH_QUERY_FIELD_LIST = Arrays
+        .asList("id", "title", "owner_id", "creator_id", "original_creator_id", "original_collection_id",
+            "publish_date", "thumbnail", "learning_objective", "license", "metadata", "taxonomy", "setting", "grading",
+            "visible_on_profile", "course_id", "unit_id", "lesson_id");
 
-    public static final Set<String> EDITABLE_FIELDS = new HashSet<>(Arrays.asList(TITLE, THUMBNAIL, LEARNING_OBJECTIVE,
-        METADATA, TAXONOMY, URL, LOGIN_REQUIRED, VISIBLE_ON_PROFILE));
+    public static final Set<String> EDITABLE_FIELDS = new HashSet<>(Arrays
+        .asList(TITLE, THUMBNAIL, LEARNING_OBJECTIVE, METADATA, TAXONOMY, URL, LOGIN_REQUIRED, VISIBLE_ON_PROFILE,
+            SETTING));
     public static final Set<String> CREATABLE_FIELDS = EDITABLE_FIELDS;
     public static final Set<String> MANDATORY_FIELDS = new HashSet<>(Arrays.asList(TITLE));
     public static final Set<String> ADD_QUESTION_FIELDS = new HashSet<>(Arrays.asList(ID));
@@ -95,11 +93,12 @@ public class AJEntityCollection extends Model {
         converterMap.put(CREATOR_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
         converterMap.put(MODIFIER_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
         converterMap.put(OWNER_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
-        converterMap.put(FORMAT,
-            (fieldValue -> FieldConverter.convertFieldToNamedType(fieldValue, ASSESSMENT_TYPE_NAME)));
+        converterMap
+            .put(FORMAT, (fieldValue -> FieldConverter.convertFieldToNamedType(fieldValue, ASSESSMENT_TYPE_NAME)));
         converterMap.put(COLLABORATOR, (FieldConverter::convertFieldToJson));
-        converterMap.put(GRADING,
-            (fieldValue -> FieldConverter.convertFieldToNamedType(fieldValue, GRADING_TYPE_NAME)));
+        converterMap.put(SETTING, (FieldConverter::convertFieldToJson));
+        converterMap
+            .put(GRADING, (fieldValue -> FieldConverter.convertFieldToNamedType(fieldValue, GRADING_TYPE_NAME)));
 
         return Collections.unmodifiableMap(converterMap);
     }
@@ -112,6 +111,7 @@ public class AJEntityCollection extends Model {
         validatorMap.put(LEARNING_OBJECTIVE, (value) -> FieldValidator.validateStringIfPresent(value, 20000));
         validatorMap.put(METADATA, FieldValidator::validateJsonIfPresent);
         validatorMap.put(TAXONOMY, FieldValidator::validateJsonIfPresent);
+        validatorMap.put(SETTING, FieldValidator::validateJsonIfPresent);
         validatorMap.put(URL, (value) -> FieldValidator.validateStringIfPresent(value, 2000));
         validatorMap.put(LOGIN_REQUIRED, FieldValidator::validateBooleanIfPresent);
         validatorMap.put(VISIBLE_ON_PROFILE, FieldValidator::validateBooleanIfPresent);
