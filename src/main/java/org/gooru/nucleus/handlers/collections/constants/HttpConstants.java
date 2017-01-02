@@ -32,7 +32,8 @@ public final class HttpConstants {
         TIMED_OUT(408, "Request Timeout"),
         TOO_LARGE(413, "Request Entity Too Large"),
         TOO_MANY_REQUESTS(429, "Too Many Requests"),
-        ERROR(500, "Internal Server Error");
+        ERROR(500, "Internal Server Error"),
+        GONE(410, "Gone");
 
         private final int code;
         private final String message;
