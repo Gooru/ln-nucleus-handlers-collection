@@ -1,13 +1,12 @@
 package org.gooru.nucleus.handlers.collections.processors;
 
-import static org.gooru.nucleus.handlers.collections.processors.utils.ValidationUtils.*;
+import static org.gooru.nucleus.handlers.collections.processors.utils.ValidationUtils.validateUser;
 
 import java.util.ResourceBundle;
 
 import org.gooru.nucleus.handlers.collections.constants.MessageConstants;
 import org.gooru.nucleus.handlers.collections.processors.commands.CommandProcessorBuilder;
 import org.gooru.nucleus.handlers.collections.processors.exceptions.VersionDeprecatedException;
-import org.gooru.nucleus.handlers.collections.processors.repositories.RepoBuilder;
 import org.gooru.nucleus.handlers.collections.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponseFactory;
@@ -24,7 +23,7 @@ class MessageProcessor implements Processor {
     private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");
     private final Message<Object> message;
     private String userId;
-    private JsonObject prefs;
+    private JsonObject session;
     private JsonObject request;
 
     public MessageProcessor(Message<Object> message) {
@@ -57,7 +56,7 @@ class MessageProcessor implements Processor {
         String collectionId = headers.get(MessageConstants.COLLECTION_ID);
         String questionId = request.getString(MessageConstants.ID);
         String resourceId = request.getString(MessageConstants.ID);
-        return new ProcessorContext(userId, prefs, request, collectionId, questionId, resourceId, headers);
+        return new ProcessorContext(userId, session, request, collectionId, questionId, resourceId, headers);
     }
 
     private ExecutionResult<MessageResponse> validateAndInitialize() {
@@ -76,13 +75,13 @@ class MessageProcessor implements Processor {
                 ExecutionResult.ExecutionStatus.FAILED);
         }
 
-        prefs = ((JsonObject) message.body()).getJsonObject(MessageConstants.MSG_KEY_PREFS);
+        session = ((JsonObject) message.body()).getJsonObject(MessageConstants.MSG_KEY_SESSION);
         request = ((JsonObject) message.body()).getJsonObject(MessageConstants.MSG_HTTP_BODY);
 
-        if (prefs == null || prefs.isEmpty()) {
-            LOGGER.error("Invalid preferences obtained, probably not authorized properly");
+        if (session == null || session.isEmpty()) {
+            LOGGER.error("Invalid session obtained, probably not authorized properly");
             return new ExecutionResult<>(
-                MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("missing.preferences")),
+                MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("missing.session")),
                 ExecutionResult.ExecutionStatus.FAILED);
         }
 
