@@ -15,6 +15,7 @@ public class ProcessorContext {
     private final String questionId;
     private final String resourceId;
     private final MultiMap requestHeaders;
+    private final TenantContext tenantContext;
 
     public ProcessorContext(String userId, JsonObject session, JsonObject request, String collectionId,
         String questionId, String resourceId, MultiMap headers) {
@@ -31,6 +32,7 @@ public class ProcessorContext {
         this.questionId = questionId;
         this.resourceId = resourceId;
         this.requestHeaders = headers;
+        this.tenantContext = new TenantContext(session);
     }
 
     public String userId() {
@@ -59,6 +61,43 @@ public class ProcessorContext {
 
     public MultiMap requestHeaders() {
         return requestHeaders;
+    }
+
+
+    public String tenant() {
+        return this.tenantContext.tenant();
+    }
+
+    public String tenantRoot() {
+        return this.tenantContext.tenantRoot();
+    }
+    private static class TenantContext {
+        private static final String TENANT = "tenant";
+        private static final String TENANT_ID = "tenant_id";
+        private static final String TENANT_ROOT = "tenant_root";
+
+        private final String tenantId;
+        private final String tenantRoot;
+
+        TenantContext(JsonObject session) {
+            JsonObject tenantJson = session.getJsonObject(TENANT);
+            if (tenantJson == null || tenantJson.isEmpty()) {
+                throw new IllegalStateException("Tenant Context invalid");
+            }
+            this.tenantId = tenantJson.getString(TENANT_ID);
+            if (tenantId == null || tenantId.isEmpty()) {
+                throw new IllegalStateException("Tenant Context with invalid tenant");
+            }
+            this.tenantRoot = tenantJson.getString(TENANT_ROOT);
+        }
+
+        public String tenant() {
+            return this.tenantId;
+        }
+
+        public String tenantRoot() {
+            return this.tenantRoot;
+        }
     }
 
 }

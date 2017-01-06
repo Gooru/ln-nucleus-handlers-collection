@@ -26,7 +26,6 @@ class CreateCollectionHandler implements DBHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(CreateCollectionHandler.class);
     private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
     private final ProcessorContext context;
-    private AJEntityCollection collection;
 
     public CreateCollectionHandler(ProcessorContext context) {
         this.context = context;
@@ -63,19 +62,12 @@ class CreateCollectionHandler implements DBHandler {
     @Override
     public ExecutionResult<MessageResponse> validateRequest() {
         // Only thing to do here is to authorize
-        return AuthorizerBuilder.buildCreateAuthorizer(context).authorize(collection);
+        return AuthorizerBuilder.buildCreateAuthorizer(context).authorize(null);
     }
 
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
         AJEntityCollection collection = new AJEntityCollection();
-        // First time creation is standalone, no course exists. It will be
-        // associated later, if the need arises. So all user ids are same
-        collection.setModifierId(context.userId());
-        collection.setOwnerId(context.userId());
-        collection.setCreatorId(context.userId());
-        collection.setTypeCollection();
-        collection.setLicense(LicenseUtil.getDefaultLicenseCode());
         // Now auto populate is done, we need to setup the converter machinery
         new DefaultAJEntityCollectionEntityBuilder().build(collection, context.request(),
             AJEntityCollection.getConverterRegistry());
@@ -95,6 +87,19 @@ class CreateCollectionHandler implements DBHandler {
             MessageResponseFactory.createCreatedResponse(collection.getId().toString(),
                 EventBuilderFactory.getCreateCollectionEventBuilder(collection.getString(AJEntityCollection.ID))),
             ExecutionResult.ExecutionStatus.SUCCESSFUL);
+    }
+
+    private void autoPopulateFields(AJEntityCollection collection) {
+        collection.setModifierId(context.userId());
+        collection.setOwnerId(context.userId());
+        collection.setCreatorId(context.userId());
+        collection.setTypeCollection();
+        collection.setLicense(LicenseUtil.getDefaultLicenseCode());
+        collection.setTenant(context.tenant());
+        String tenantRoot = context.tenantRoot();
+        if (tenantRoot != null && !tenantRoot.isEmpty()) {
+            collection.setTenantRoot(tenantRoot);
+        }
     }
 
     @Override

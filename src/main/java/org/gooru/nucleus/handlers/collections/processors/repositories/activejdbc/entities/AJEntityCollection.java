@@ -48,6 +48,9 @@ public class AJEntityCollection extends Model {
     public static final String GRADING_TYPE_NAME = "grading_type";
     public static final String REORDER_PAYLOAD_KEY = "order";
     public static final String LICENSE = "license";
+    public static final String TENANT = "tenant";
+    public static final String TENANT_ROOT = "tenant_root";
+
 
     // Queries used
     public static final String AUTHORIZER_QUERY =
@@ -99,6 +102,8 @@ public class AJEntityCollection extends Model {
         converterMap.put(SETTING, (FieldConverter::convertFieldToJson));
         converterMap
             .put(GRADING, (fieldValue -> FieldConverter.convertFieldToNamedType(fieldValue, GRADING_TYPE_NAME)));
+        converterMap.put(TENANT, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
+        converterMap.put(TENANT_ROOT, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
 
         return Collections.unmodifiableMap(converterMap);
     }
@@ -118,6 +123,8 @@ public class AJEntityCollection extends Model {
         validatorMap.put(COLLABORATOR,
             (value) -> FieldValidator.validateDeepJsonArrayIfPresent(value, FieldValidator::validateUuid));
         validatorMap.put(REORDER_PAYLOAD_KEY, new ReorderFieldValidator());
+        validatorMap.put(TENANT, (FieldValidator::validateUuid));
+        validatorMap.put(TENANT_ROOT, (FieldValidator::validateUuid));
         return Collections.unmodifiableMap(validatorMap);
     }
 
@@ -184,39 +191,19 @@ public class AJEntityCollection extends Model {
     }
 
     public void setModifierId(String modifier) {
-        FieldConverter fc = converterRegistry.get(MODIFIER_ID);
-        if (fc != null) {
-            this.set(MODIFIER_ID, fc.convertField(modifier));
-        } else {
-            this.set(MODIFIER_ID, modifier);
-        }
+        setFieldUsingConverter(MODIFIER_ID, modifier);
     }
 
-    public void setCreatorId(String modifier) {
-        FieldConverter fc = converterRegistry.get(CREATOR_ID);
-        if (fc != null) {
-            this.set(CREATOR_ID, fc.convertField(modifier));
-        } else {
-            this.set(CREATOR_ID, modifier);
-        }
+    public void setCreatorId(String creator) {
+        setFieldUsingConverter(CREATOR_ID, creator);
     }
 
     public void setOwnerId(String owner) {
-        FieldConverter fc = converterRegistry.get(OWNER_ID);
-        if (fc != null) {
-            this.set(OWNER_ID, fc.convertField(owner));
-        } else {
-            this.set(OWNER_ID, owner);
-        }
+        setFieldUsingConverter(OWNER_ID, owner);
     }
 
     public void setIdWithConverter(String id) {
-        FieldConverter fc = converterRegistry.get(ID);
-        if (fc != null) {
-            this.set(ID, fc.convertField(id));
-        } else {
-            this.set(ID, id);
-        }
+        setFieldUsingConverter(ID, id);
     }
 
     public void setLicense(Integer code) {
@@ -224,11 +211,23 @@ public class AJEntityCollection extends Model {
     }
 
     public void setTypeCollection() {
-        FieldConverter fc = converterRegistry.get(FORMAT);
+        setFieldUsingConverter(FORMAT, COLLECTION_TYPE_VALUE);
+    }
+
+    public void setTenant(String tenant) {
+        setFieldUsingConverter(TENANT, tenant);
+    }
+
+    public void setTenantRoot(String tenantRoot) {
+        setFieldUsingConverter(TENANT_ROOT, tenantRoot);
+    }
+
+    private void setFieldUsingConverter(String fieldName, Object fieldValue) {
+        FieldConverter fc = converterRegistry.get(fieldName);
         if (fc != null) {
-            this.set(FORMAT, fc.convertField(COLLECTION_TYPE_VALUE));
+            this.set(fieldName, fc.convertField(fieldValue));
         } else {
-            this.set(FORMAT, COLLECTION_TYPE_VALUE);
+            this.set(fieldName, fieldValue);
         }
     }
 
