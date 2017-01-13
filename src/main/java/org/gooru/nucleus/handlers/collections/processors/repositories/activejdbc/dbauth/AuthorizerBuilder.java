@@ -37,4 +37,8 @@ public final class AuthorizerBuilder {
     public static Authorizer<AJEntityCollection> buildAddContentToCollectionAuthorizer(ProcessorContext context) {
         return new AddContentToCollectionAuthorizer(context);
     }
+
+    public static Authorizer<AJEntityCollection> buildTenantAuthorizer(ProcessorContext context) {
+        return new TenantAuthorizer(context);
+    }
 }

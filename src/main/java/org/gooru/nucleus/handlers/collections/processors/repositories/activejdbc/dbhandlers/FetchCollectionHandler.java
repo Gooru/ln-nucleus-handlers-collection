@@ -3,6 +3,7 @@ package org.gooru.nucleus.handlers.collections.processors.repositories.activejdb
 import java.util.ResourceBundle;
 
 import org.gooru.nucleus.handlers.collections.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityCollection;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityContent;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.formatter.JsonFormatterBuilder;
@@ -37,9 +38,8 @@ class FetchCollectionHandler implements DBHandler {
         // There should be an collection id present
         if (context.collectionId() == null || context.collectionId().isEmpty()) {
             LOGGER.warn("Missing collection");
-            return new ExecutionResult<>(
-                MessageResponseFactory
-                    .createNotFoundResponse(resourceBundle.getString("collection.id") + context.collectionId()),
+            return new ExecutionResult<>(MessageResponseFactory
+                .createNotFoundResponse(resourceBundle.getString("collection.id") + context.collectionId()),
                 ExecutionResult.ExecutionStatus.FAILED);
         }
 
@@ -63,20 +63,22 @@ class FetchCollectionHandler implements DBHandler {
                 ExecutionResult.ExecutionStatus.FAILED);
         }
         this.collection = collections.get(0);
-        return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
+        return AuthorizerBuilder.buildTenantAuthorizer(this.context).authorize(collection);
     }
 
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
         // First create response from Collection
-        JsonObject response = new JsonObject(JsonFormatterBuilder
-            .buildSimpleJsonFormatter(false, AJEntityCollection.FETCH_QUERY_FIELD_LIST).toJson(this.collection));
+        JsonObject response = new JsonObject(
+            JsonFormatterBuilder.buildSimpleJsonFormatter(false, AJEntityCollection.FETCH_QUERY_FIELD_LIST)
+                .toJson(this.collection));
         // Now query contents and populate them
         LazyList<AJEntityContent> contents =
             AJEntityContent.findBySQL(AJEntityContent.FETCH_CONTENT_SUMMARY_QUERY, context.collectionId());
         if (contents.size() > 0) {
-            response.put(AJEntityContent.CONTENT, new JsonArray(JsonFormatterBuilder
-                .buildSimpleJsonFormatter(false, AJEntityContent.FETCH_CONTENT_SUMMARY_FIELDS).toJson(contents)));
+            response.put(AJEntityContent.CONTENT, new JsonArray(
+                JsonFormatterBuilder.buildSimpleJsonFormatter(false, AJEntityContent.FETCH_CONTENT_SUMMARY_FIELDS)
+                    .toJson(contents)));
         } else {
             response.put(AJEntityContent.CONTENT, new JsonArray());
         }
@@ -101,10 +103,12 @@ class FetchCollectionHandler implements DBHandler {
                     response.put(AJEntityCollection.COLLABORATOR, new JsonArray());
                 }
             } catch (DBException e) {
-                LOGGER.error("Error trying to get course collaborator for course '{}' to fetch collection '{}'",
-                    courseId, this.context.collectionId(), e);
-                return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(
-                    resourceBundle.getString("internal.store.error")), ExecutionResult.ExecutionStatus.FAILED);
+                LOGGER
+                    .error("Error trying to get course collaborator for course '{}' to fetch collection '{}'", courseId,
+                        this.context.collectionId(), e);
+                return new ExecutionResult<>(MessageResponseFactory
+                    .createInternalErrorResponse(resourceBundle.getString("internal.store.error")),
+                    ExecutionResult.ExecutionStatus.FAILED);
             }
         }
         return new ExecutionResult<>(MessageResponseFactory.createOkayResponse(response),

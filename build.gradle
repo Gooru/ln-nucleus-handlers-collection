@@ -18,7 +18,7 @@ plugins {
 def localBuildFile = "./build-local.gradle"
 def useLocalBuild = new File(localBuildFile).exists()
 if (useLocalBuild) {
-    apply from : localBuildFile
+    apply from: localBuildFile
 }
 
 defaultTasks 'shadowJar'
@@ -67,6 +67,9 @@ dependencies {
 
     // Test dependencies
     testCompile "junit:junit:${junitVersion}"
+
+    // Other projects
+    compile project(':nucleus-libs-tenant')
 }
 
 shadowJar {
