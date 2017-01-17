@@ -62,9 +62,10 @@ public class AJEntityCollection extends Model {
     public static final String PUBLISHED_FILTER = "id = ?::uuid and publish_status = 'published'::publish_status_type;";
     public static final String FETCH_QUERY =
         "select id, title, owner_id, creator_id, original_creator_id, original_collection_id, publish_date, "
-            + "thumbnail, learning_objective, license, metadata, taxonomy, setting, grading, visible_on_profile, "
-            + "collaborator, course_id, unit_id, lesson_id, tenant, tenant_root from collection where id = ?::uuid "
-            + "and format = " + "'collection'::content_container_type and is_deleted = false";
+            + "publish_status, thumbnail, learning_objective, license, metadata, taxonomy, setting, grading, "
+            + "visible_on_profile, collaborator, course_id, unit_id, lesson_id, tenant, tenant_root from collection "
+            + "where id = ?::uuid and format = "
+            + "'collection'::content_container_type and is_deleted = false";
     public static final String COURSE_COLLABORATOR_QUERY =
         "select collaborator from course where id = ?::uuid and is_deleted = false";
     public static final List<String> FETCH_QUERY_FIELD_LIST = Arrays
