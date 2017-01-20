@@ -19,44 +19,43 @@ public class AJEntityCollection extends Model {
     // Variables used
     public static final String ID = "id";
     public static final String COLLECTION = "collection";
-    public static final String CREATOR_ID = "creator_id";
+    private static final String CREATOR_ID = "creator_id";
     public static final String PUBLISH_DATE = "publish_date";
     public static final String IS_DELETED = "is_deleted";
-    public static final String MODIFIER_ID = "modifier_id";
+    private static final String MODIFIER_ID = "modifier_id";
     public static final String OWNER_ID = "owner_id";
-    public static final String TITLE = "title";
-    public static final String THUMBNAIL = "thumbnail";
-    public static final String LEARNING_OBJECTIVE = "learning_objective";
-    public static final String FORMAT = "format";
-    public static final String METADATA = "metadata";
-    public static final String TAXONOMY = "taxonomy";
-    public static final String URL = "url";
-    public static final String LOGIN_REQUIRED = "login_required";
-    public static final String VISIBLE_ON_PROFILE = "visible_on_profile";
+    private static final String TITLE = "title";
+    private static final String THUMBNAIL = "thumbnail";
+    private static final String LEARNING_OBJECTIVE = "learning_objective";
+    private static final String FORMAT = "format";
+    private static final String METADATA = "metadata";
+    private static final String TAXONOMY = "taxonomy";
+    private static final String URL = "url";
+    private static final String LOGIN_REQUIRED = "login_required";
+    private static final String VISIBLE_ON_PROFILE = "visible_on_profile";
     public static final String COLLABORATOR = "collaborator";
-    public static final String SETTING = "setting";
+    private static final String SETTING = "setting";
     public static final String COURSE_ID = "course_id";
     public static final String UNIT_ID = "unit_id";
     public static final String LESSON_ID = "lesson_id";
-    public static final String GRADING = "grading";
+    private static final String GRADING = "grading";
     public static final String TABLE_COURSE = "course";
     public static final String UPDATED_AT = "updated_at";
-    public static final String UUID_TYPE = "uuid";
-    public static final String JSONB_TYPE = "jsonb";
-    public static final String ASSESSMENT_TYPE_NAME = "content_container_type";
-    public static final String COLLECTION_TYPE_VALUE = "collection";
-    public static final String GRADING_TYPE_NAME = "grading_type";
+    private static final String COLLECTION_TYPE_NAME = "content_container_type";
+    private static final String COLLECTION_TYPE_VALUE = "collection";
+    private static final String GRADING_TYPE_NAME = "grading_type";
     public static final String REORDER_PAYLOAD_KEY = "order";
-    public static final String LICENSE = "license";
-    public static final String TENANT = "tenant";
-    public static final String TENANT_ROOT = "tenant_root";
+    private static final String LICENSE = "license";
+    private static final String TENANT = "tenant";
+    private static final String TENANT_ROOT = "tenant_root";
     private static final String PUBLISH_STATUS = "publish_status";
     private static final String PUBLISH_STATUS_PUBLISHED = "published";
 
     // Queries used
     public static final String AUTHORIZER_QUERY =
-        "select id, course_id, unit_id, lesson_id, owner_id, creator_id, publish_date, collaborator, grading from "
-            + "collection where format = ?::content_container_type and id = ?::uuid and is_deleted = ?";
+        "select id, course_id, unit_id, lesson_id, owner_id, creator_id, publish_date, collaborator, tenant, "
+            + "tenant_root from collection where format = ?::content_container_type and id = ?::uuid and is_deleted ="
+            + " ?";
 
     public static final String AUTH_FILTER = "id = ?::uuid and (owner_id = ?::uuid or collaborator ?? ?);";
     public static final String PUBLISHED_FILTER = "id = ?::uuid and publish_status = 'published'::publish_status_type;";
@@ -64,8 +63,7 @@ public class AJEntityCollection extends Model {
         "select id, title, owner_id, creator_id, original_creator_id, original_collection_id, publish_date, "
             + "publish_status, thumbnail, learning_objective, license, metadata, taxonomy, setting, grading, "
             + "visible_on_profile, collaborator, course_id, unit_id, lesson_id, tenant, tenant_root from collection "
-            + "where id = ?::uuid and format = "
-            + "'collection'::content_container_type and is_deleted = false";
+            + "where id = ?::uuid and format = " + "'collection'::content_container_type and is_deleted = false";
     public static final String COURSE_COLLABORATOR_QUERY =
         "select collaborator from course where id = ?::uuid and is_deleted = false";
     public static final List<String> FETCH_QUERY_FIELD_LIST = Arrays
@@ -100,7 +98,7 @@ public class AJEntityCollection extends Model {
         converterMap.put(MODIFIER_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
         converterMap.put(OWNER_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
         converterMap
-            .put(FORMAT, (fieldValue -> FieldConverter.convertFieldToNamedType(fieldValue, ASSESSMENT_TYPE_NAME)));
+            .put(FORMAT, (fieldValue -> FieldConverter.convertFieldToNamedType(fieldValue, COLLECTION_TYPE_NAME)));
         converterMap.put(COLLABORATOR, (FieldConverter::convertFieldToJson));
         converterMap.put(SETTING, (FieldConverter::convertFieldToJson));
         converterMap
@@ -240,6 +238,14 @@ public class AJEntityCollection extends Model {
 
     public String getCourseId() {
         return this.getString(COURSE_ID);
+    }
+
+    public String getTenant() {
+        return this.getString(TENANT);
+    }
+
+    public String getTenantRoot() {
+        return this.getString(TENANT_ROOT);
     }
 
     private static class CollectionValidationRegistry implements ValidatorRegistry {
