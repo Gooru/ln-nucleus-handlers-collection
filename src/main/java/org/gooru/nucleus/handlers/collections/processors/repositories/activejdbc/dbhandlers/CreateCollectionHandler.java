@@ -69,6 +69,7 @@ class CreateCollectionHandler implements DBHandler {
     public ExecutionResult<MessageResponse> executeRequest() {
         AJEntityCollection collection = new AJEntityCollection();
         // Now auto populate is done, we need to setup the converter machinery
+        autoPopulateFields(collection);
         new DefaultAJEntityCollectionEntityBuilder().build(collection, context.request(),
             AJEntityCollection.getConverterRegistry());
 
