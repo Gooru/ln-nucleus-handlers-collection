@@ -25,7 +25,7 @@ public class ProcessorContext {
         this.userId = userId;
         this.session = session.copy();
         this.request = request != null ? request.copy() : null;
-        // Assessment id, resource id and question id can be null in case of create and hence can't validate them
+        // Collection id, resource id and question id can be null in case of create and hence can't validate them
         // unless we know the op type also Do not want to build dependency on op for this context to work and hence
         // is open ended. Worst case would be RTE, so beware
         this.collectionId = collectionId;
@@ -63,7 +63,6 @@ public class ProcessorContext {
         return requestHeaders;
     }
 
-
     public String tenant() {
         return this.tenantContext.tenant();
     }
@@ -71,6 +70,7 @@ public class ProcessorContext {
     public String tenantRoot() {
         return this.tenantContext.tenantRoot();
     }
+
     private static class TenantContext {
         private static final String TENANT = "tenant";
         private static final String TENANT_ID = "tenant_id";

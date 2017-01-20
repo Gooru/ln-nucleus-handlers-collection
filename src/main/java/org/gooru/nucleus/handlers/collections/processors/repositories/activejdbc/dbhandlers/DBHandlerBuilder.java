@@ -16,7 +16,7 @@ public final class DBHandlerBuilder {
     }
 
     public static DBHandler buildUpdateCollaboratorForCollection(ProcessorContext context) {
-        return new UpdateCollaboratorForCollection(context);
+        return new UpdateCollaboratorHandler(context);
     }
 
     public static DBHandler buildAddQuestionToCollectionHandler(ProcessorContext context) {

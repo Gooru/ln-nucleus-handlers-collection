@@ -23,15 +23,16 @@ import io.vertx.core.json.JsonObject;
 /**
  * Created by ashish on 12/1/16.
  */
-class UpdateCollaboratorForCollection implements DBHandler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(UpdateCollaboratorForCollection.class);
+class UpdateCollaboratorHandler implements DBHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(UpdateCollaboratorHandler.class);
     private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
     private static final String COLLABORATORS_REMOVED = "collaborators.removed";
     private static final String COLLABORATORS_ADDED = "collaborators.added";
     private final ProcessorContext context;
     private AJEntityCollection collection;
+    private JsonObject diffCollaborators;
 
-    public UpdateCollaboratorForCollection(ProcessorContext context) {
+    public UpdateCollaboratorHandler(ProcessorContext context) {
         this.context = context;
     }
 
@@ -45,8 +46,8 @@ class UpdateCollaboratorForCollection implements DBHandler {
                 ExecutionResult.ExecutionStatus.FAILED);
         }
         // The user should not be anonymous
-        if (context.userId() == null || context.userId().isEmpty()
-            || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
+        if (context.userId() == null || context.userId().isEmpty() || context.userId()
+            .equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
             LOGGER.warn("Anonymous user attempting to edit collection");
             return new ExecutionResult<>(
                 MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")),
@@ -60,8 +61,9 @@ class UpdateCollaboratorForCollection implements DBHandler {
                 ExecutionResult.ExecutionStatus.FAILED);
         }
         // Our validators should certify this
-        JsonObject errors = new DefaultPayloadValidator().validatePayload(context.request(),
-            AJEntityCollection.editCollaboratorFieldSelector(), AJEntityCollection.getValidatorRegistry());
+        JsonObject errors = new DefaultPayloadValidator()
+            .validatePayload(context.request(), AJEntityCollection.editCollaboratorFieldSelector(),
+                AJEntityCollection.getValidatorRegistry());
         if (errors != null && !errors.isEmpty()) {
             LOGGER.warn("Validation errors for request");
             return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors),
@@ -75,14 +77,14 @@ class UpdateCollaboratorForCollection implements DBHandler {
     public ExecutionResult<MessageResponse> validateRequest() {
         // Fetch the collection where type is collection and it is not deleted
         // already and id is specified id
-        LazyList<AJEntityCollection> collections = AJEntityCollection.findBySQL(AJEntityCollection.AUTHORIZER_QUERY,
-            AJEntityCollection.COLLECTION, context.collectionId(), false);
+        LazyList<AJEntityCollection> collections = AJEntityCollection
+            .findBySQL(AJEntityCollection.AUTHORIZER_QUERY, AJEntityCollection.COLLECTION, context.collectionId(),
+                false);
         // Collection should be present in DB
         if (collections.size() < 1) {
             LOGGER.warn("Collection id: {} not present in DB", context.collectionId());
-            return new ExecutionResult<>(
-                MessageResponseFactory
-                    .createNotFoundResponse(resourceBundle.getString("collection.id") + context.collectionId()),
+            return new ExecutionResult<>(MessageResponseFactory
+                .createNotFoundResponse(resourceBundle.getString("collection.id") + context.collectionId()),
                 ExecutionResult.ExecutionStatus.FAILED);
         }
         this.collection = collections.get(0);
@@ -90,21 +92,22 @@ class UpdateCollaboratorForCollection implements DBHandler {
         if (course != null) {
             LOGGER.error("Cannot update collaborator for collection '{}' as it is part of course '{}'",
                 context.collectionId(), course);
-            return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(
-                resourceBundle.getString("collection.belongs.to.course")), ExecutionResult.ExecutionStatus.FAILED);
+            return new ExecutionResult<>(MessageResponseFactory
+                .createInvalidRequestResponse(resourceBundle.getString("collection.belongs.to.course")),
+                ExecutionResult.ExecutionStatus.FAILED);
         }
-        return AuthorizerBuilder.buildUpdateCollaboratorAuthorizer(this.context).authorize(collection);
+        diffCollaborators = calculateDiffOfCollaborators();
+        return doAuthorization();
     }
 
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
-        JsonObject diffCollaborators = calculateDiffOfCollaborators();
         AJEntityCollection collection = new AJEntityCollection();
         collection.setIdWithConverter(context.collectionId());
         collection.setModifierId(context.userId());
         // Now auto populate is done, we need to setup the converter machinery
-        new DefaultAJEntityCollectionEntityBuilder().build(collection, context.request(),
-            AJEntityCollection.getConverterRegistry());
+        new DefaultAJEntityCollectionEntityBuilder()
+            .build(collection, context.request(), AJEntityCollection.getConverterRegistry());
 
         boolean result = collection.save();
         if (!result) {
@@ -117,9 +120,8 @@ class UpdateCollaboratorForCollection implements DBHandler {
                     ExecutionResult.ExecutionStatus.FAILED);
             }
         }
-        return new ExecutionResult<>(
-            MessageResponseFactory.createNoContentResponse(resourceBundle.getString("updated"),
-                EventBuilderFactory.getUpdateCollaboratorEventBuilder(context.collectionId(), diffCollaborators)),
+        return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(resourceBundle.getString("updated"),
+            EventBuilderFactory.getUpdateCollaboratorEventBuilder(context.collectionId(), diffCollaborators)),
             ExecutionResult.ExecutionStatus.SUCCESSFUL);
     }
 
@@ -128,13 +130,24 @@ class UpdateCollaboratorForCollection implements DBHandler {
         return false;
     }
 
+    private ExecutionResult<MessageResponse> doAuthorization() {
+        ExecutionResult<MessageResponse> result =
+            AuthorizerBuilder.buildUpdateCollaboratorAuthorizer(this.context).authorize(this.collection);
+        if (result.hasFailed()) {
+            return result;
+        }
+        return AuthorizerBuilder
+            .buildTenantCollaboratorAuthorizer(this.context, diffCollaborators.getJsonArray(COLLABORATORS_ADDED))
+            .authorize(this.collection);
+    }
+
     private JsonObject calculateDiffOfCollaborators() {
         JsonObject result = new JsonObject();
         // Find current collaborators
         String currentCollaboratorsAsString = this.collection.getString(AJEntityCollection.COLLABORATOR);
         JsonArray currentCollaborators;
-        currentCollaborators = currentCollaboratorsAsString != null && !currentCollaboratorsAsString.isEmpty()
-            ? new JsonArray(currentCollaboratorsAsString) : new JsonArray();
+        currentCollaborators = currentCollaboratorsAsString != null && !currentCollaboratorsAsString.isEmpty() ?
+            new JsonArray(currentCollaboratorsAsString) : new JsonArray();
         JsonArray newCollaborators = this.context.request().getJsonArray(AJEntityCollection.COLLABORATOR);
         if (currentCollaborators.isEmpty() && !newCollaborators.isEmpty()) {
             // Adding all
@@ -159,9 +172,9 @@ class UpdateCollaboratorForCollection implements DBHandler {
             result.put(COLLABORATORS_REMOVED, toBeDeleted);
         } else {
             // WHAT ????
-            LOGGER.warn(
-                "Updating collaborator with empty payload when current collaborator is empty for assessment '{}'",
-                this.context.collectionId());
+            LOGGER
+                .warn("Updating collaborator with empty payload when current collaborator is empty for collection '{}'",
+                    this.context.collectionId());
             result.put(COLLABORATORS_ADDED, new JsonArray());
             result.put(COLLABORATORS_REMOVED, new JsonArray());
         }

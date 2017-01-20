@@ -32,8 +32,7 @@ class TenantAuthorizer implements Authorizer<AJEntityCollection> {
     @Override
     public ExecutionResult<MessageResponse> authorize(AJEntityCollection model) {
         TenantTree userTenantTree = TenantTreeBuilder.build(context.tenant(), context.tenantRoot());
-        TenantTree contentTenantTree = TenantTreeBuilder
-            .build(model.getString(AJEntityCollection.TENANT), model.getString(AJEntityCollection.TENANT_ROOT));
+        TenantTree contentTenantTree = TenantTreeBuilder.build(model.getTenant(), model.getTenantRoot());
 
         // First validation based on published status of this entity only
         ContentTenantAuthorization authorization = ContentTenantAuthorizationBuilder
@@ -54,7 +53,7 @@ class TenantAuthorizer implements Authorizer<AJEntityCollection> {
                 long published =
                     Base.count(AJEntityCollection.TABLE_COURSE, AJEntityCollection.PUBLISHED_FILTER, courseId);
                 if (published >= 1) {
-                    // It is published, check that if assessment was already published in which case nothing to check
+                    // It is published, check that if collection was already published in which case nothing to check
                     // further else check with the new information bit
                     if (!model.isCollectionPublished()) {
                         authorization = ContentTenantAuthorizationBuilder
