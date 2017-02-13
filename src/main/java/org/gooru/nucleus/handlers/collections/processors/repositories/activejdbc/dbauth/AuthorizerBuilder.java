@@ -36,8 +36,9 @@ public final class AuthorizerBuilder {
         return model -> new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
     }
 
-    public static Authorizer<AJEntityCollection> buildAddContentToCollectionAuthorizer(ProcessorContext context) {
-        return new AddContentToCollectionAuthorizer(context);
+    public static Authorizer<AJEntityCollection> buildAddContentToCollectionAuthorizer(ProcessorContext context,
+        boolean isResource) {
+        return new AddContentToCollectionAuthorizer(context, isResource);
     }
 
     public static Authorizer<AJEntityCollection> buildTenantAuthorizer(ProcessorContext context) {
