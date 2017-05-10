@@ -121,6 +121,13 @@ class AddQuestionToCollectionHandler implements DBHandler {
                             ExecutionResult.ExecutionStatus.FAILED);
                     }
                 }
+                
+                // Add rubric in CULC
+                Base.exec(AJEntityContent.ADD_RUBRIC_QUERY, this.context.collectionId(),
+                    this.collection.getString(AJEntityCollection.COURSE_ID),
+                    this.collection.getString(AJEntityCollection.UNIT_ID),
+                    this.collection.getString(AJEntityCollection.LESSON_ID), this.context.userId(),
+                    this.context.questionId(), this.context.userId());
 
                 return new ExecutionResult<>(MessageResponseFactory
                     .createNoContentResponse(resourceBundle.getString("question.added"), EventBuilderFactory
