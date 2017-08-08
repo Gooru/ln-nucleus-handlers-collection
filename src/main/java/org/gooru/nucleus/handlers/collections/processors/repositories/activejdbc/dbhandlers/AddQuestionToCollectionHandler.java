@@ -46,8 +46,8 @@ class AddQuestionToCollectionHandler implements DBHandler {
                 ExecutionResult.ExecutionStatus.FAILED);
         }
         // The user should not be anonymous
-        if (context.userId() == null || context.userId().isEmpty()
-            || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
+        if (context.userId() == null || context.userId().isEmpty() || context.userId()
+            .equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
             LOGGER.warn("Anonymous user attempting to edit collection");
             return new ExecutionResult<>(
                 MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")),
@@ -61,8 +61,9 @@ class AddQuestionToCollectionHandler implements DBHandler {
                 ExecutionResult.ExecutionStatus.FAILED);
         }
         // Our validators should certify this
-        JsonObject errors = new DefaultPayloadValidator().validatePayload(context.request(),
-            AJEntityCollection.addQuestionFieldSelector(), AJEntityCollection.getValidatorRegistry());
+        JsonObject errors = new DefaultPayloadValidator()
+            .validatePayload(context.request(), AJEntityCollection.addQuestionFieldSelector(),
+                AJEntityCollection.getValidatorRegistry());
         if (errors != null && !errors.isEmpty()) {
             LOGGER.warn("Validation errors for request");
             return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors),
@@ -78,18 +79,18 @@ class AddQuestionToCollectionHandler implements DBHandler {
         // Fetch the collection where type is collection and it is not deleted
         // already and id is specified id
 
-        LazyList<AJEntityCollection> collections = AJEntityCollection.findBySQL(AJEntityCollection.AUTHORIZER_QUERY,
-            AJEntityCollection.COLLECTION, context.collectionId(), false);
+        LazyList<AJEntityCollection> collections = AJEntityCollection
+            .findBySQL(AJEntityCollection.AUTHORIZER_QUERY, AJEntityCollection.COLLECTION, context.collectionId(),
+                false);
         // Collection should be present in DB
         if (collections.size() < 1) {
             LOGGER.warn("Collection id: {} not present in DB", context.collectionId());
-            return new ExecutionResult<>(
-                MessageResponseFactory
-                    .createNotFoundResponse(resourceBundle.getString("collection.id") + context.collectionId()),
+            return new ExecutionResult<>(MessageResponseFactory
+                .createNotFoundResponse(resourceBundle.getString("collection.id") + context.collectionId()),
                 ExecutionResult.ExecutionStatus.FAILED);
         }
         this.collection = collections.get(0);
-        return AuthorizerBuilder.buildAddContentToCollectionAuthorizer(this.context).authorize(collection);
+        return AuthorizerBuilder.buildAddContentToCollectionAuthorizer(this.context, false).authorize(collection);
     }
 
     @Override
@@ -120,18 +121,23 @@ class AddQuestionToCollectionHandler implements DBHandler {
                             ExecutionResult.ExecutionStatus.FAILED);
                     }
                 }
+                
+                // Add rubric in CULC
+                Base.exec(AJEntityContent.ADD_RUBRIC_QUERY, this.context.collectionId(),
+                    this.collection.getString(AJEntityCollection.COURSE_ID),
+                    this.collection.getString(AJEntityCollection.UNIT_ID),
+                    this.collection.getString(AJEntityCollection.LESSON_ID), this.context.userId(),
+                    this.context.questionId(), this.context.userId());
 
-                return new ExecutionResult<>(
-                    MessageResponseFactory.createNoContentResponse(resourceBundle.getString("question.added"),
-                        EventBuilderFactory.getAddContentToCollectionEventBuilder(context.collectionId(),
-                            context.questionId())),
+                return new ExecutionResult<>(MessageResponseFactory
+                    .createNoContentResponse(resourceBundle.getString("question.added"), EventBuilderFactory
+                        .getAddContentToCollectionEventBuilder(context.collectionId(), context.questionId())),
                     ExecutionResult.ExecutionStatus.SUCCESSFUL);
             } else if (count == 0) {
                 LOGGER.error("Question '{}' add to collection '{}' failed as question is not available or non existent",
                     this.context.questionId(), this.context.collectionId());
-                return new ExecutionResult<>(
-                    MessageResponseFactory
-                        .createInternalErrorResponse(resourceBundle.getString("question.not.exists.or.not.available")),
+                return new ExecutionResult<>(MessageResponseFactory
+                    .createInternalErrorResponse(resourceBundle.getString("question.not.exists.or.not.available")),
                     ExecutionResult.ExecutionStatus.FAILED);
             } else {
                 LOGGER.error("Something is wrong. Adding question '{}' to collection '{}' updated '{}' rows",

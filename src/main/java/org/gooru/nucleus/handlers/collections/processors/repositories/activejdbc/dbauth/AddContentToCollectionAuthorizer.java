@@ -23,9 +23,11 @@ public class AddContentToCollectionAuthorizer implements Authorizer<AJEntityColl
     private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
     private final ProcessorContext context;
     private final Logger LOGGER = LoggerFactory.getLogger(Authorizer.class);
+    private final boolean isContentResource;
 
-    public AddContentToCollectionAuthorizer(ProcessorContext context) {
+    public AddContentToCollectionAuthorizer(ProcessorContext context, boolean isResource) {
         this.context = context;
+        this.isContentResource = isResource;
     }
 
     @Override
@@ -45,9 +47,8 @@ public class AddContentToCollectionAuthorizer implements Authorizer<AJEntityColl
             } catch (DBException e) {
                 LOGGER.error("Error checking authorization for update for Collection '{}' for course '{}'",
                     context.collectionId(), courseId, e);
-                return new ExecutionResult<>(
-                    MessageResponseFactory
-                        .createInternalErrorResponse(resourceBundle.getString("internal.error.authorization.checking")),
+                return new ExecutionResult<>(MessageResponseFactory
+                    .createInternalErrorResponse(resourceBundle.getString("internal.error.authorization.checking")),
                     ExecutionResult.ExecutionStatus.FAILED);
             }
         } else {
@@ -75,17 +76,15 @@ public class AddContentToCollectionAuthorizer implements Authorizer<AJEntityColl
 
     private ExecutionResult<MessageResponse> authorizeForContent(AJEntityCollection collection) {
         try {
-            boolean contentIsResource = context.resourceId() != null && !context.resourceId().isEmpty();
-            LazyList<AJEntityContent> contents = AJEntityContent.where(AJEntityContent.CONTENT_FOR_ADD_FILTER,
-                contentIsResource ? context.resourceId() : context.questionId(), context.userId());
+            LazyList<AJEntityContent> contents =
+                AJEntityContent.where(AJEntityContent.CONTENT_FOR_ADD_FILTER, context.questionId(), context.userId());
             if (contents.size() == 1) {
-                if (contentIsResource) {
+                if (isContentResource) {
                     if (contents.get(0).isContentOriginal()) {
                         LOGGER.warn("Resource '{}' being added to collection '{}' is not a reference but original",
                             context.resourceId(), context.collectionId());
-                        return new ExecutionResult<>(
-                            MessageResponseFactory
-                                .createInvalidRequestResponse(resourceBundle.getString("resource.reference.needed")),
+                        return new ExecutionResult<>(MessageResponseFactory
+                            .createInvalidRequestResponse(resourceBundle.getString("resource.reference.needed")),
                             ExecutionResult.ExecutionStatus.FAILED);
                     }
                 }
@@ -94,13 +93,13 @@ public class AddContentToCollectionAuthorizer implements Authorizer<AJEntityColl
         } catch (DBException e) {
             LOGGER.error("Error querying content '{}' availability for associating in collection '{}'",
                 context.questionId() != null ? context.questionId() : context.resourceId(), context.collectionId(), e);
-            return new ExecutionResult<>(
-                MessageResponseFactory
-                    .createInternalErrorResponse(resourceBundle.getString("internal.error.authorization.checking")),
+            return new ExecutionResult<>(MessageResponseFactory
+                .createInternalErrorResponse(resourceBundle.getString("internal.error.authorization.checking")),
                 ExecutionResult.ExecutionStatus.FAILED);
         }
-        return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(
-            resourceBundle.getString("content.association.not.available")), ExecutionResult.ExecutionStatus.FAILED);
+        return new ExecutionResult<>(MessageResponseFactory
+            .createInvalidRequestResponse(resourceBundle.getString("content.association.not.available")),
+            ExecutionResult.ExecutionStatus.FAILED);
     }
 
 }

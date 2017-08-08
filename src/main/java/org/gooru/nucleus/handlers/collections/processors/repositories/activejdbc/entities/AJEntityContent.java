@@ -20,6 +20,10 @@ public class AJEntityContent extends Model {
         "update content set collection_id = ?::uuid, course_id = ?::uuid, unit_id = ?::uuid, lesson_id = ?::uuid, modifier_id = ?::uuid, updated_at = "
             + "now(), sequence_id = ? where id = ?::uuid and is_deleted = false and content_format = 'resource'::content_format_type and course_id is null "
             + "and collection_id is null and creator_id = ?::uuid";
+    public static final String ADD_RUBRIC_QUERY =
+        "update rubric set collection_id = ?::uuid, course_id = ?::uuid, unit_id = ?::uuid, lesson_id = ?::uuid,"
+            + " modifier_id = ?::uuid, updated_at = now() where content_id = ?::uuid and is_deleted = false and course_id is null "
+            + "and collection_id is null and creator_id = ?::uuid";
     public static final String CONTENT_FOR_REORDER_COLLECTION_QUERY =
         "select id from content where collection_id = ?::uuid and is_deleted = false";
     public static final String REORDER_QUERY =
