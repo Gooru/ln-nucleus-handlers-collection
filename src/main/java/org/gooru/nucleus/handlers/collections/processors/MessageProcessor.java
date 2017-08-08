@@ -1,16 +1,19 @@
 package org.gooru.nucleus.handlers.collections.processors;
 
+import static org.gooru.nucleus.handlers.collections.processors.utils.ValidationUtils.validateUser;
+
 import java.util.ResourceBundle;
-import java.util.UUID;
 
 import org.gooru.nucleus.handlers.collections.constants.MessageConstants;
-import org.gooru.nucleus.handlers.collections.processors.repositories.RepoBuilder;
+import org.gooru.nucleus.handlers.collections.processors.commands.CommandProcessorBuilder;
+import org.gooru.nucleus.handlers.collections.processors.exceptions.VersionDeprecatedException;
 import org.gooru.nucleus.handlers.collections.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponseFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vertx.core.MultiMap;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
 
@@ -20,7 +23,7 @@ class MessageProcessor implements Processor {
     private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");
     private final Message<Object> message;
     private String userId;
-    private JsonObject prefs;
+    private JsonObject session;
     private JsonObject request;
 
     public MessageProcessor(Message<Object> message) {
@@ -38,127 +41,22 @@ class MessageProcessor implements Processor {
             }
 
             final String msgOp = message.headers().get(MessageConstants.MSG_HEADER_OP);
-            switch (msgOp) {
-            case MessageConstants.MSG_OP_COLLECTION_GET:
-                result = processCollectionGet();
-                break;
-            case MessageConstants.MSG_OP_COLLECTION_CREATE:
-                result = processCollectionCreate();
-                break;
-            case MessageConstants.MSG_OP_COLLECTION_UPDATE:
-                result = processCollectionUpdate();
-                break;
-            case MessageConstants.MSG_OP_COLLECTION_DELETE:
-                result = processCollectionDelete();
-                break;
-            case MessageConstants.MSG_OP_COLLECTION_QUESTION_ADD:
-                result = processCollectionAddQuestion();
-                break;
-            case MessageConstants.MSG_OP_COLLECTION_RESOURCE_ADD:
-                result = processCollectionAddResource();
-                break;
-            case MessageConstants.MSG_OP_COLLECTION_CONTENT_REORDER:
-                result = processCollectionContentReorder();
-                break;
-            case MessageConstants.MSG_OP_COLLECTION_COLLABORATOR_UPDATE:
-                result = processCollectionCollaboratorUpdate();
-                break;
-            default:
-                LOGGER.error("Invalid operation type passed in, not able to handle");
-                return MessageResponseFactory
-                    .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("operation.invalid"));
-            }
-            return result;
+            return CommandProcessorBuilder.lookupBuilder(msgOp).build(createContext()).process();
+        } catch (VersionDeprecatedException e) {
+            LOGGER.error("Version is deprecated");
+            return MessageResponseFactory.createVersionDeprecatedResponse();
         } catch (Throwable e) {
             LOGGER.error("Unhandled exception in processing", e);
             return MessageResponseFactory.createInternalErrorResponse();
         }
     }
 
-    private MessageResponse processCollectionContentReorder() {
-        ProcessorContext context = createContext();
-        if (!validateContext(context)) {
-            return MessageResponseFactory
-                .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("collection.id.invalid"));
-        }
-        return RepoBuilder.buildCollectionRepo(context).reorderContentInCollection();
-    }
-
-    private MessageResponse processCollectionCollaboratorUpdate() {
-        ProcessorContext context = createContext();
-        if (!validateContext(context)) {
-            return MessageResponseFactory
-                .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("collection.id.invalid"));
-        }
-        return RepoBuilder.buildCollectionRepo(context).updateCollaborator();
-    }
-
-    private MessageResponse processCollectionAddQuestion() {
-        ProcessorContext context = createContextWithQuestion();
-        if (!validateContextWithQuestion(context)) {
-            return MessageResponseFactory
-                .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("collection.question.id.invalid"));
-        }
-        return RepoBuilder.buildCollectionRepo(context).addQuestionToCollection();
-    }
-
-    private MessageResponse processCollectionAddResource() {
-        ProcessorContext context = createContextWithResource();
-        if (!validateContextWithResource(context)) {
-            return MessageResponseFactory
-                .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("collection.resource.id.invalid"));
-        }
-        return RepoBuilder.buildCollectionRepo(context).addResourceToCollection();
-    }
-
-    private MessageResponse processCollectionDelete() {
-        ProcessorContext context = createContext();
-        if (!validateContext(context)) {
-            return MessageResponseFactory
-                .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("collection.id.invalid"));
-        }
-        return RepoBuilder.buildCollectionRepo(context).deleteCollection();
-    }
-
-    private MessageResponse processCollectionUpdate() {
-        ProcessorContext context = createContext();
-        if (!validateContext(context)) {
-            return MessageResponseFactory
-                .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("collection.id.invalid"));
-        }
-        return RepoBuilder.buildCollectionRepo(context).updateCollection();
-    }
-
-    private MessageResponse processCollectionGet() {
-        ProcessorContext context = createContext();
-        if (!validateContext(context)) {
-            return MessageResponseFactory
-                .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("collection.id.invalid"));
-        }
-        return RepoBuilder.buildCollectionRepo(context).fetchCollection();
-    }
-
-    private MessageResponse processCollectionCreate() {
-        ProcessorContext context = createContext();
-
-        return RepoBuilder.buildCollectionRepo(context).createCollection();
-    }
-
     private ProcessorContext createContext() {
-        String collectionId = message.headers().get(MessageConstants.COLLECTION_ID);
-        return new ProcessorContext(userId, prefs, request, collectionId, null, null);
-    }
-
-    private ProcessorContext createContextWithQuestion() {
-        String collectionId = message.headers().get(MessageConstants.COLLECTION_ID);
+        MultiMap headers = message.headers();
+        String collectionId = headers.get(MessageConstants.COLLECTION_ID);
         String questionId = request.getString(MessageConstants.ID);
-        return new ProcessorContext(userId, prefs, request, collectionId, questionId, null);
-    }
-
-    private ProcessorContext createContextWithResource() {
-        String collectionId = message.headers().get(MessageConstants.COLLECTION_ID);
         String resourceId = request.getString(MessageConstants.ID);
-        return new ProcessorContext(userId, prefs, request, collectionId, null, resourceId);
+        return new ProcessorContext(userId, session, request, collectionId, questionId, resourceId, headers);
     }
 
     private ExecutionResult<MessageResponse> validateAndInitialize() {
@@ -177,13 +75,13 @@ class MessageProcessor implements Processor {
                 ExecutionResult.ExecutionStatus.FAILED);
         }
 
-        prefs = ((JsonObject) message.body()).getJsonObject(MessageConstants.MSG_KEY_PREFS);
+        session = ((JsonObject) message.body()).getJsonObject(MessageConstants.MSG_KEY_SESSION);
         request = ((JsonObject) message.body()).getJsonObject(MessageConstants.MSG_HTTP_BODY);
 
-        if (prefs == null || prefs.isEmpty()) {
-            LOGGER.error("Invalid preferences obtained, probably not authorized properly");
+        if (session == null || session.isEmpty()) {
+            LOGGER.error("Invalid session obtained, probably not authorized properly");
             return new ExecutionResult<>(
-                MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("missing.preferences")),
+                MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("missing.session")),
                 ExecutionResult.ExecutionStatus.FAILED);
         }
 
@@ -196,58 +94,6 @@ class MessageProcessor implements Processor {
 
         // All is well, continue processing
         return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
-    }
-
-    private boolean validateContext(ProcessorContext context) {
-        return validateContext(context, false, false);
-    }
-
-    private boolean validateContextWithQuestion(ProcessorContext context) {
-        return validateContext(context, true, false);
-    }
-
-    private boolean validateContextWithResource(ProcessorContext context) {
-        return validateContext(context, false, true);
-    }
-
-    private boolean validateContext(ProcessorContext context, boolean shouldHaveQuestion, boolean shouldHaveResource) {
-        if (!validateId(context.collectionId())) {
-            LOGGER.error("Invalid request, collection id not available/incorrect format. Aborting");
-            return false;
-        }
-        if (shouldHaveQuestion) {
-            if (!validateId(context.questionId())) {
-                LOGGER.error("Invalid request, question id not available/incorrect format. Aborting");
-                return false;
-            }
-        }
-        if (shouldHaveResource) {
-            if (!validateId(context.resourceId())) {
-                LOGGER.error("Invalid request, resource id not available/incorrect format. Aborting");
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean validateUser(String userId) {
-        return !(userId == null || userId.isEmpty())
-            && (userId.equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS) || validateUuid(userId));
-    }
-
-    private boolean validateId(String id) {
-        return !(id == null || id.isEmpty()) && validateUuid(id);
-    }
-
-    private boolean validateUuid(String uuidString) {
-        try {
-            UUID uuid = UUID.fromString(uuidString);
-            return true;
-        } catch (IllegalArgumentException e) {
-            return false;
-        } catch (Exception e) {
-            return false;
-        }
     }
 
 }
