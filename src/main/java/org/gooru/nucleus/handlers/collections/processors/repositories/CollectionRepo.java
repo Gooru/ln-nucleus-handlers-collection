@@ -21,5 +21,7 @@ public interface CollectionRepo {
     MessageResponse addQuestionToCollection();
 
     MessageResponse addResourceToCollection();
+    
+    MessageResponse aggregateResourceTagsAtCollection();
 
 }

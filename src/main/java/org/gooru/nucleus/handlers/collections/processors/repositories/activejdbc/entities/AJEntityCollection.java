@@ -29,7 +29,7 @@ public class AJEntityCollection extends Model {
     private static final String LEARNING_OBJECTIVE = "learning_objective";
     private static final String FORMAT = "format";
     private static final String METADATA = "metadata";
-    private static final String TAXONOMY = "taxonomy";
+    public static final String TAXONOMY = "taxonomy";
     private static final String URL = "url";
     private static final String LOGIN_REQUIRED = "login_required";
     private static final String VISIBLE_ON_PROFILE = "visible_on_profile";
@@ -50,11 +50,13 @@ public class AJEntityCollection extends Model {
     private static final String TENANT_ROOT = "tenant_root";
     private static final String PUBLISH_STATUS = "publish_status";
     private static final String PUBLISH_STATUS_PUBLISHED = "published";
+    public static final String AGGREGATED_TAXONOMY = "aggregated_taxonomy";
+    public static final String AGGREGATED_GUT_CODES = "aggregated_gut_codes";
 
     // Queries used
     public static final String AUTHORIZER_QUERY =
-        "select id, course_id, unit_id, lesson_id, owner_id, creator_id, publish_date, collaborator, tenant, "
-            + "tenant_root from collection where format = ?::content_container_type and id = ?::uuid and is_deleted ="
+        "select id, course_id, unit_id, lesson_id, owner_id, creator_id, publish_date, collaborator, tenant, taxonomy, aggregated_taxonomy, "
+            + "aggregated_gut_codes, tenant_root from collection where format = ?::content_container_type and id = ?::uuid and is_deleted ="
             + " ?";
 
     public static final String AUTH_FILTER = "id = ?::uuid and (owner_id = ?::uuid or collaborator ?? ?);";
@@ -80,6 +82,7 @@ public class AJEntityCollection extends Model {
     public static final Set<String> ADD_RESOURCE_FIELDS = ADD_QUESTION_FIELDS;
     public static final Set<String> COLLABORATOR_FIELDS = new HashSet<>(Arrays.asList(COLLABORATOR));
     public static final Set<String> REORDER_FIELDS = new HashSet<>(Arrays.asList(REORDER_PAYLOAD_KEY));
+    public static final Set<String> AGGREGATE_TAGS_FIELDS = new HashSet<>(Arrays.asList(AGGREGATED_TAXONOMY));
 
     private static final Map<String, FieldValidator> validatorRegistry;
     private static final Map<String, FieldConverter> converterRegistry;
@@ -105,7 +108,8 @@ public class AJEntityCollection extends Model {
             .put(GRADING, (fieldValue -> FieldConverter.convertFieldToNamedType(fieldValue, GRADING_TYPE_NAME)));
         converterMap.put(TENANT, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
         converterMap.put(TENANT_ROOT, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
-
+        converterMap.put(AGGREGATED_TAXONOMY, (FieldConverter::convertFieldToJson));
+        converterMap.put(AGGREGATED_GUT_CODES, (FieldConverter::convertFieldToJson));
         return Collections.unmodifiableMap(converterMap);
     }
 
@@ -126,11 +130,16 @@ public class AJEntityCollection extends Model {
         validatorMap.put(REORDER_PAYLOAD_KEY, new ReorderFieldValidator());
         validatorMap.put(TENANT, (FieldValidator::validateUuid));
         validatorMap.put(TENANT_ROOT, (FieldValidator::validateUuid));
+        validatorMap.put(AGGREGATED_TAXONOMY, FieldValidator::validateJsonIfPresent);
         return Collections.unmodifiableMap(validatorMap);
     }
 
     public static FieldSelector editFieldSelector() {
         return () -> Collections.unmodifiableSet(EDITABLE_FIELDS);
+    }
+    
+    public static FieldSelector aggregateTagsFieldSelector() {
+        return() -> Collections.unmodifiableSet(AGGREGATE_TAGS_FIELDS);
     }
 
     public static FieldSelector reorderFieldSelector() {
@@ -221,6 +230,14 @@ public class AJEntityCollection extends Model {
 
     public void setTenantRoot(String tenantRoot) {
         setFieldUsingConverter(TENANT_ROOT, tenantRoot);
+    }
+    
+    public void setAggregatedTaxonomy(String aggregatedTaxonomy) {
+        setFieldUsingConverter(AGGREGATED_TAXONOMY, aggregatedTaxonomy);
+    }
+
+    public void setAggregatedGutCodes(String aggregatedGutCodes) {
+        setFieldUsingConverter(AGGREGATED_GUT_CODES, aggregatedGutCodes);
     }
 
     private void setFieldUsingConverter(String fieldName, Object fieldValue) {

@@ -7,6 +7,7 @@ public final class MessagebusEndpoints {
      */
     public static final String MBEP_COLLECTION = "org.gooru.nucleus.message.bus.collection";
     public static final String MBEP_EVENT = "org.gooru.nucleus.message.bus.publisher.event";
+    public static final String MBEP_TAG_AGGREGATOR = "org.gooru.nucleus.message.bus.tag.aggregator";
 
     private MessagebusEndpoints() {
         throw new AssertionError();

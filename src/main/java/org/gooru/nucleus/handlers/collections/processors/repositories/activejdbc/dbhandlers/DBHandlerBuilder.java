@@ -42,4 +42,8 @@ public final class DBHandlerBuilder {
     public static DBHandler buildReorderContentInCollectionHandler(ProcessorContext context) {
         return new ReorderContentInCollectionHandler(context);
     }
+
+    public static DBHandler buildAggregateResourceTagsAtCollectionHandler(ProcessorContext context) {
+        return new AggregateResourceTagsAtCollectionHandler(context);
+    }
 }

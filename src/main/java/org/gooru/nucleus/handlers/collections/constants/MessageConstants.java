@@ -28,10 +28,12 @@ public final class MessageConstants {
     public static final String MSG_OP_COLLECTION_QUESTION_ADD = "collection.question.add";
     public static final String MSG_OP_COLLECTION_CONTENT_REORDER = "collection.content.reorder";
     public static final String MSG_OP_COLLECTION_RESOURCE_ADD = "collection.resource.add";
+    public static final String MSG_OP_COLLECTION_RESOURCE_TAG_AGGREGATE = "collection.resource.tag.aggregate";
 
     // Containers for different responses
     public static final String RESP_CONTAINER_MBUS = "mb.container";
     public static final String RESP_CONTAINER_EVENT = "mb.event";
+    public static final String RESP_CONTAINER_TAGS_TO_AGGREGATE = "mb.tags.to.aggregate";
 
     public static final String COLLECTION_ID = "collectionId";
     public static final String QUESTION_ID = "questionId";
