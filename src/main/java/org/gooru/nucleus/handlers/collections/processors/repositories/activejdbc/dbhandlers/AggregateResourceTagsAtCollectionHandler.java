@@ -108,11 +108,25 @@ public class AggregateResourceTagsAtCollectionHandler implements DBHandler {
             ? new JsonObject(existingAggregatedTaxonomy) : new JsonObject();
 
         JsonObject tagDiff = calculateTagDifference();
+        // If no tag difference is found in existing tags and in request,
+        // silently ignore and return success without event
+        if (tagDiff == null || tagDiff.isEmpty()) {
+            LOGGER.debug("no tag difference found, skipping.");
+            return new ExecutionResult<>(
+                MessageResponseFactory.createNoContentResponse(resourceBundle.getString("updated")),
+                ExecutionResult.ExecutionStatus.SUCCESSFUL);
+        }
+        
         this.tagsAdded = tagDiff.getJsonObject(TAGS_ADDED);
         this.tagsRemoved = tagDiff.getJsonObject(TAGS_REMOVED);
 
-        processTagAddition();
-        processTagRemoval();
+        if (this.tagsRemoved != null && !this.tagsRemoved.isEmpty()) {
+            processTagRemoval();
+        }
+
+        if (this.tagsAdded != null && !this.tagsAdded.isEmpty()) {
+            processTagAddition();
+        }
 
         this.collection.setAggregatedGutCodes(this.aggregatedGutCodes.toString());
         this.collection.setAggregatedTaxonomy(this.aggregatedTaxonomy.toString());
