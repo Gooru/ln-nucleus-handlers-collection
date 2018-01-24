@@ -13,6 +13,8 @@ public final class EventBuilderFactory {
     private static final String EVT_COLLECTION_CONTENT_ADD = "event.collection.content.add";
     private static final String EVT_COLLECTION_REORDER = "event.collection.content.reorder";
     private static final String EVT_COLLECTION_COLLABORATOR_UPDATE = "event.collection.collaborator.update";
+    private static final String EVT_COLLECTION_RESOURCE_TAG_AGGREGATE = "event.collection.resource.tag.aggregate";
+    
     private static final String EVENT_NAME = "event.name";
     private static final String EVENT_BODY = "event.body";
     private static final String COLLECTION_ID = "id";
@@ -50,6 +52,11 @@ public final class EventBuilderFactory {
     public static EventBuilder getUpdateCollaboratorEventBuilder(String collectionId, JsonObject collaborators) {
         return () -> new JsonObject().put(EVENT_NAME, EVT_COLLECTION_COLLABORATOR_UPDATE).put(EVENT_BODY,
             collaborators.put(COLLECTION_ID, collectionId));
+    }
+    
+    public static EventBuilder getAggregateResourceTagAtCollectionEventBuilder(String collectionId, JsonObject tags) {
+        return () -> new JsonObject().put(EVENT_NAME, EVT_COLLECTION_RESOURCE_TAG_AGGREGATE).put(EVENT_BODY,
+            tags.put(COLLECTION_ID, collectionId));
     }
 
 }

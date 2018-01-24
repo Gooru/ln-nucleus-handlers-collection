@@ -7,34 +7,38 @@ import org.gooru.nucleus.handlers.collections.constants.MessageConstants;
 import org.gooru.nucleus.handlers.collections.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.collections.processors.events.EventBuilderFactory;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbhelpers.GUTCodeLookupHelper;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityCollection;
-import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entitybuilders.EntityBuilder;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.validators.PayloadValidator;
 import org.gooru.nucleus.handlers.collections.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponseFactory;
-import org.gooru.nucleus.handlers.collections.processors.tagaggregator.TagAggregatorRequestBuilder;
 import org.gooru.nucleus.handlers.collections.processors.tagaggregator.TagAggregatorRequestBuilderFactory;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 /**
- * Created by ashish on 12/1/16.
+ * @author szgooru Created On: 10-Oct-2017
  */
-class UpdateCollectionHandler implements DBHandler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(UpdateCollectionHandler.class);
+public class AggregateResourceTagsAtCollectionHandler implements DBHandler {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AggregateResourceTagsAtCollectionHandler.class);
     private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
+
     private final ProcessorContext context;
     private AJEntityCollection collection;
+    private JsonObject tagsAdded;
+    private JsonObject tagsRemoved;
+    private JsonObject aggregatedGutCodes;
+    private JsonObject aggregatedTaxonomy;
 
     private static final String TAGS_ADDED = "tags_added";
     private static final String TAGS_REMOVED = "tags_removed";
 
-    public UpdateCollectionHandler(ProcessorContext context) {
+    public AggregateResourceTagsAtCollectionHandler(ProcessorContext context) {
         this.context = context;
     }
 
@@ -64,14 +68,13 @@ class UpdateCollectionHandler implements DBHandler {
         }
         // Our validators should certify this
         JsonObject errors = new DefaultPayloadValidator().validatePayload(context.request(),
-            AJEntityCollection.editFieldSelector(), AJEntityCollection.getValidatorRegistry());
+            AJEntityCollection.aggregateTagsFieldSelector(), AJEntityCollection.getValidatorRegistry());
         if (errors != null && !errors.isEmpty()) {
             LOGGER.warn("Validation errors for request");
             return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors),
                 ExecutionResult.ExecutionStatus.FAILED);
         }
         return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
-
     }
 
     @Override
@@ -95,24 +98,45 @@ class UpdateCollectionHandler implements DBHandler {
 
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
-        AJEntityCollection collectionToUpdate = new AJEntityCollection();
-        collectionToUpdate.setIdWithConverter(context.collectionId());
-        collectionToUpdate.setModifierId(context.userId());
 
-        // Now auto populate is done, we need to setup the converter machinery
-        new DefaultAJEntityCollectionEntityBuilder().build(collectionToUpdate, context.request(),
-            AJEntityCollection.getConverterRegistry());
+        String existingAggregatedGutCodes = this.collection.getString(AJEntityCollection.AGGREGATED_GUT_CODES);
+        String existingAggregatedTaxonomy = this.collection.getString(AJEntityCollection.AGGREGATED_TAXONOMY);
 
-        boolean result = collectionToUpdate.save();
+        this.aggregatedGutCodes = (existingAggregatedGutCodes != null && !existingAggregatedGutCodes.isEmpty())
+            ? new JsonObject(existingAggregatedGutCodes) : new JsonObject();
+        this.aggregatedTaxonomy = (existingAggregatedTaxonomy != null && !existingAggregatedTaxonomy.isEmpty())
+            ? new JsonObject(existingAggregatedTaxonomy) : new JsonObject();
+
+        JsonObject tagDiff = calculateTagDifference();
+        // If no tag difference is found in existing tags and in request,
+        // silently ignore and return success without event
+        if (tagDiff == null || tagDiff.isEmpty()) {
+            LOGGER.debug("no tag difference found, skipping.");
+            return new ExecutionResult<>(
+                MessageResponseFactory.createNoContentResponse(resourceBundle.getString("updated")),
+                ExecutionResult.ExecutionStatus.SUCCESSFUL);
+        }
+        
+        this.tagsAdded = tagDiff.getJsonObject(TAGS_ADDED);
+        this.tagsRemoved = tagDiff.getJsonObject(TAGS_REMOVED);
+
+        if (this.tagsRemoved != null && !this.tagsRemoved.isEmpty()) {
+            processTagRemoval();
+        }
+
+        if (this.tagsAdded != null && !this.tagsAdded.isEmpty()) {
+            processTagAddition();
+        }
+
+        this.collection.setAggregatedGutCodes(this.aggregatedGutCodes.toString());
+        this.collection.setAggregatedTaxonomy(this.aggregatedTaxonomy.toString());
+
+        boolean result = this.collection.save();
         if (!result) {
-            LOGGER.error("Collection with id '{}' failed to save", context.collectionId());
-            if (collectionToUpdate.hasErrors()) {
-                Map<String, String> map = collectionToUpdate.errors();
-                JsonObject errors = new JsonObject();
-                map.forEach(errors::put);
-                return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors),
-                    ExecutionResult.ExecutionStatus.FAILED);
-            }
+            LOGGER.error("Collection with id '{}' failed to aggregate tags", context.collectionId());
+            return new ExecutionResult<>(
+                MessageResponseFactory.createInternalErrorResponse(resourceBundle.getString("internal.store.error")),
+                ExecutionResult.ExecutionStatus.FAILED);
         }
 
         // Check if the collection is in lesson. If yes, calculate the tag
@@ -120,20 +144,20 @@ class UpdateCollectionHandler implements DBHandler {
         // aggregation handler
         String lessonId = this.collection.getString(AJEntityCollection.LESSON_ID);
         if (lessonId != null && !lessonId.isEmpty()) {
-            JsonObject tagDiff = calculateTagDifference();
             if (tagDiff != null) {
                 return new ExecutionResult<>(
                     MessageResponseFactory.createNoContentResponse(resourceBundle.getString("updated"),
-                        EventBuilderFactory.getUpdateCollectionEventBuilder(context.collectionId()),
+                        EventBuilderFactory.getAggregateResourceTagAtCollectionEventBuilder(context.collectionId(),
+                            tagDiff),
                         TagAggregatorRequestBuilderFactory.getLessonTagAggregatorRequestBuilder(lessonId, tagDiff)),
                     ExecutionResult.ExecutionStatus.SUCCESSFUL);
             }
         }
 
-        // Otherwise return without tag aggregation
+        // If collection is standalone return without processing tag aggregation
         return new ExecutionResult<>(
             MessageResponseFactory.createNoContentResponse(resourceBundle.getString("updated"),
-                EventBuilderFactory.getUpdateCollectionEventBuilder(context.collectionId())),
+                EventBuilderFactory.getAggregateResourceTagAtCollectionEventBuilder(context.collectionId(), tagDiff)),
             ExecutionResult.ExecutionStatus.SUCCESSFUL);
     }
 
@@ -145,15 +169,57 @@ class UpdateCollectionHandler implements DBHandler {
     private static class DefaultPayloadValidator implements PayloadValidator {
     }
 
-    private static class DefaultAJEntityCollectionEntityBuilder implements EntityBuilder<AJEntityCollection> {
+    private void processTagAddition() {
+        Map<String, String> frameworkToGutCodeMapping =
+            GUTCodeLookupHelper.populateGutCodesToTaxonomyMapping(this.tagsAdded.fieldNames());
+
+        frameworkToGutCodeMapping.keySet().forEach(gutCode -> {
+            // If the gut code to be added is already exists in aggregated gut
+            // codes, then increase competency count by 1
+            // If it does not exists, then add new
+            if (this.aggregatedGutCodes.containsKey(gutCode)) {
+                int competencyCount = this.aggregatedGutCodes.getInteger(gutCode);
+                this.aggregatedGutCodes.put(gutCode, (competencyCount + 1));
+            } else {
+                this.aggregatedGutCodes.put(gutCode, 1);
+                this.aggregatedTaxonomy.put(frameworkToGutCodeMapping.get(gutCode),
+                    this.tagsAdded.getJsonObject(frameworkToGutCodeMapping.get(gutCode)));
+            }
+        });
+    }
+
+    private void processTagRemoval() {
+
+        Map<String, String> frameworkToGutCodeMapping =
+            GUTCodeLookupHelper.populateGutCodesToTaxonomyMapping(this.tagsRemoved.fieldNames());
+
+        frameworkToGutCodeMapping.keySet().forEach(gutCode -> {
+            if (this.aggregatedGutCodes.containsKey(gutCode)) {
+                int competencyCount = this.aggregatedGutCodes.getInteger(gutCode);
+                // Competency count 1 means this competency is tagged only once
+                // and across lessons. Hence can be removed
+                // Competency count greater than 1 means this competency is
+                // tagged multiple times across lesson, so we will just reduce
+                // the competency count
+                if (competencyCount == 1) {
+                    this.aggregatedGutCodes.remove(gutCode);
+                    aggregatedTaxonomy.remove(frameworkToGutCodeMapping.get(gutCode));
+                } else if (competencyCount > 1) {
+                    this.aggregatedGutCodes.put(gutCode, (competencyCount - 1));
+                }
+            }
+
+            // Do nothing of the gut code which is not present in existing
+            // aggregated gut codes
+        });
     }
 
     private JsonObject calculateTagDifference() {
         JsonObject result = new JsonObject();
-        String existingTagsAsString = this.collection.getString(AJEntityCollection.TAXONOMY);
+        String existingTagsAsString = this.collection.getString(AJEntityCollection.AGGREGATED_TAXONOMY);
         JsonObject existingTags = existingTagsAsString != null && !existingTagsAsString.isEmpty()
             ? new JsonObject(existingTagsAsString) : new JsonObject();
-        JsonObject newTags = this.context.request().getJsonObject(AJEntityCollection.TAXONOMY);
+        JsonObject newTags = this.context.request().getJsonObject(AJEntityCollection.AGGREGATED_TAXONOMY);
 
         if (existingTags.isEmpty() && newTags != null && !newTags.isEmpty()) {
             result.put(TAGS_ADDED, newTags.copy());

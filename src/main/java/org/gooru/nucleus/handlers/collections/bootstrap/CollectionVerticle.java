@@ -50,6 +50,17 @@ public class CollectionVerticle extends AbstractVerticle {
                             }
                             eb.send(MessagebusEndpoints.MBEP_EVENT, eventData);
                         }
+                        
+                        JsonObject tagsToAggregate = result.tagsToAggregate();
+                        if (tagsToAggregate != null) {
+                            JsonObject session = ((JsonObject) message.body()).getJsonObject(MessageConstants.MSG_KEY_SESSION);
+                            String sessionToken = ((JsonObject) message.body()).getString(MessageConstants.MSG_HEADER_TOKEN);
+                            tagsToAggregate.put(MessageConstants.MSG_HEADER_TOKEN, sessionToken);
+                            tagsToAggregate.put(MessageConstants.MSG_KEY_SESSION, session);
+
+                            LOGGER.debug("sending request for tag aggregation: {}", tagsToAggregate);
+                            eb.send(MessagebusEndpoints.MBEP_TAG_AGGREGATOR, tagsToAggregate);
+                        }
                     });
                 }).completionHandler(result -> {
                     if (result.succeeded()) {

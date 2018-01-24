@@ -13,9 +13,12 @@ import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc
 import org.gooru.nucleus.handlers.collections.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponseFactory;
+import org.gooru.nucleus.handlers.collections.processors.tagaggregator.TagAggregatorRequestBuilderFactory;
+import org.gooru.nucleus.handlers.courses.constants.CommonConstants;
 import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.DBException;
 import org.javalite.activejdbc.LazyList;
+import org.javalite.activejdbc.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +31,8 @@ class DeleteCollectionHandler implements DBHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeleteCollectionHandler.class);
     private final ProcessorContext context;
     private final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
+    private AJEntityCollection existingCollection;
+    private static final String TAGS_REMOVED = "tags_removed";
 
     public DeleteCollectionHandler(ProcessorContext context) {
         this.context = context;
@@ -70,13 +75,13 @@ class DeleteCollectionHandler implements DBHandler {
                     .createNotFoundResponse(resourceBundle.getString("collection.id") + context.collectionId()),
                 ExecutionResult.ExecutionStatus.FAILED);
         }
-        AJEntityCollection collection = collections.get(0);
+        this.existingCollection = collections.get(0);
         // Log a warning if it is published
-        if (collection.getDate(AJEntityCollection.PUBLISH_DATE) != null) {
+        if (this.existingCollection.getDate(AJEntityCollection.PUBLISH_DATE) != null) {
             LOGGER.warn("Collection with id '{}' is published collection but it is being deleted",
                 context.collectionId());
         }
-        return AuthorizerBuilder.buildDeleteAuthorizer(this.context).authorize(collection);
+        return AuthorizerBuilder.buildDeleteAuthorizer(this.context).authorize(this.existingCollection);
     }
 
     @Override
@@ -104,6 +109,22 @@ class DeleteCollectionHandler implements DBHandler {
                 MessageResponseFactory.createInternalErrorResponse(resourceBundle.getString("contents.delete.error")),
                 ExecutionResult.ExecutionStatus.FAILED);
         }
+        
+        // Check if the collection is in lesson. If yes, calculate the tag
+        // difference and prepare tag aggregation request to send to tag
+        // aggregation handler
+        String lessonId = this.existingCollection.getString(AJEntityCollection.LESSON_ID);
+        if (lessonId != null && !lessonId.isEmpty()) {
+            JsonObject tagDiff = calculateTagDifference();
+            if (tagDiff != null) {
+                return new ExecutionResult<>(
+                    MessageResponseFactory.createNoContentResponse(resourceBundle.getString("deleted"),
+                        EventBuilderFactory.getDeleteCollectionEventBuilder(context.collectionId()),
+                        TagAggregatorRequestBuilderFactory.getLessonTagAggregatorRequestBuilder(lessonId, tagDiff)),
+                    ExecutionResult.ExecutionStatus.SUCCESSFUL);
+            }
+        }
+        
         return new ExecutionResult<>(
             MessageResponseFactory.createNoContentResponse(resourceBundle.getString("deleted"),
                 EventBuilderFactory.getDeleteCollectionEventBuilder(context.collectionId())),
@@ -129,6 +150,15 @@ class DeleteCollectionHandler implements DBHandler {
             LOGGER.error("Error deleting questions for Collection '{}'", context.collectionId(), e);
             return false;
         }
+    }
+    
+    private JsonObject calculateTagDifference() {
+        JsonObject result = new JsonObject();
+        String existingTagsAsString = this.existingCollection.getString(AJEntityCollection.TAXONOMY);
+        JsonObject existingTags = (existingTagsAsString != null && !existingTagsAsString.isEmpty())
+            ? new JsonObject(existingTagsAsString) : null;
+
+        return existingTags != null ? result.put(TAGS_REMOVED, existingTags) : null;
     }
 
 }
