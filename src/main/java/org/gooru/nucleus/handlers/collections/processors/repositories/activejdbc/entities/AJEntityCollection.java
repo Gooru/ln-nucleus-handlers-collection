@@ -1,5 +1,6 @@
 package org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities;
 
+import java.sql.SQLException;
 import java.util.*;
 
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.converters.ConverterRegistry;
@@ -10,12 +11,17 @@ import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.validators.ValidatorRegistry;
 import org.javalite.activejdbc.Model;
 import org.javalite.activejdbc.annotations.Table;
+import org.postgresql.util.PGobject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by ashish on 11/1/16.
  */
 @Table("collection")
 public class AJEntityCollection extends Model {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AJEntityCollection.class);
+    
     // Variables used
     public static final String ID = "id";
     public static final String COLLECTION = "collection";
@@ -50,8 +56,9 @@ public class AJEntityCollection extends Model {
     private static final String TENANT_ROOT = "tenant_root";
     private static final String PUBLISH_STATUS = "publish_status";
     private static final String PUBLISH_STATUS_PUBLISHED = "published";
-    public static final String AGGREGATED_TAXONOMY = "aggregated_taxonomy";
-    public static final String AGGREGATED_GUT_CODES = "aggregated_gut_codes";
+    public static final String GUT_CODES = "gut_codes";
+    
+    private static final String TEXT_ARRAY_TYPE = "text[]";
 
     // Queries used
     public static final String AUTHORIZER_QUERY =
@@ -82,7 +89,7 @@ public class AJEntityCollection extends Model {
     public static final Set<String> ADD_RESOURCE_FIELDS = ADD_QUESTION_FIELDS;
     public static final Set<String> COLLABORATOR_FIELDS = new HashSet<>(Arrays.asList(COLLABORATOR));
     public static final Set<String> REORDER_FIELDS = new HashSet<>(Arrays.asList(REORDER_PAYLOAD_KEY));
-    public static final Set<String> AGGREGATE_TAGS_FIELDS = new HashSet<>(Arrays.asList(AGGREGATED_TAXONOMY));
+    public static final Set<String> AGGREGATE_TAGS_FIELDS = new HashSet<>(Arrays.asList(TAXONOMY));
 
     private static final Map<String, FieldValidator> validatorRegistry;
     private static final Map<String, FieldConverter> converterRegistry;
@@ -108,8 +115,7 @@ public class AJEntityCollection extends Model {
             .put(GRADING, (fieldValue -> FieldConverter.convertFieldToNamedType(fieldValue, GRADING_TYPE_NAME)));
         converterMap.put(TENANT, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
         converterMap.put(TENANT_ROOT, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
-        converterMap.put(AGGREGATED_TAXONOMY, (FieldConverter::convertFieldToJson));
-        converterMap.put(AGGREGATED_GUT_CODES, (FieldConverter::convertFieldToJson));
+        converterMap.put(GUT_CODES, (FieldConverter::convertFieldToJson));
         return Collections.unmodifiableMap(converterMap);
     }
 
@@ -130,7 +136,6 @@ public class AJEntityCollection extends Model {
         validatorMap.put(REORDER_PAYLOAD_KEY, new ReorderFieldValidator());
         validatorMap.put(TENANT, (FieldValidator::validateUuid));
         validatorMap.put(TENANT_ROOT, (FieldValidator::validateUuid));
-        validatorMap.put(AGGREGATED_TAXONOMY, FieldValidator::validateJsonIfPresent);
         return Collections.unmodifiableMap(validatorMap);
     }
 
@@ -232,12 +237,12 @@ public class AJEntityCollection extends Model {
         setFieldUsingConverter(TENANT_ROOT, tenantRoot);
     }
     
-    public void setAggregatedTaxonomy(String aggregatedTaxonomy) {
-        setFieldUsingConverter(AGGREGATED_TAXONOMY, aggregatedTaxonomy);
+    public void setTaxonomy(String taxonomy) {
+        setFieldUsingConverter(TAXONOMY, taxonomy);
     }
-
-    public void setAggregatedGutCodes(String aggregatedGutCodes) {
-        setFieldUsingConverter(AGGREGATED_GUT_CODES, aggregatedGutCodes);
+    
+    public void setGutCodes(String gutCodes) {
+        setPGObject(GUT_CODES, TEXT_ARRAY_TYPE, gutCodes);
     }
 
     private void setFieldUsingConverter(String fieldName, Object fieldValue) {
@@ -263,6 +268,18 @@ public class AJEntityCollection extends Model {
 
     public String getTenantRoot() {
         return this.getString(TENANT_ROOT);
+    }
+    
+    private void setPGObject(String field, String type, String value) {
+        PGobject pgObject = new PGobject();
+        pgObject.setType(type);
+        try {
+            pgObject.setValue(value);
+            this.set(field, pgObject);
+        } catch (SQLException e) {
+            LOGGER.error("Not able to set value for field: {}, type: {}, value: {}", field, type, value);
+            this.errors().put(field, value);
+        }
     }
 
     private static class CollectionValidationRegistry implements ValidatorRegistry {

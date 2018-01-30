@@ -30,10 +30,8 @@ public class AggregateResourceTagsAtCollectionHandler implements DBHandler {
 
     private final ProcessorContext context;
     private AJEntityCollection collection;
-    private JsonObject tagsAdded;
-    private JsonObject tagsRemoved;
-    private JsonObject aggregatedGutCodes;
-    private JsonObject aggregatedTaxonomy;
+    private JsonObject gutCodes;
+    private JsonObject taxonomy;
 
     private static final String TAGS_ADDED = "tags_added";
     private static final String TAGS_REMOVED = "tags_removed";
@@ -99,37 +97,24 @@ public class AggregateResourceTagsAtCollectionHandler implements DBHandler {
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
 
-        String existingAggregatedGutCodes = this.collection.getString(AJEntityCollection.AGGREGATED_GUT_CODES);
-        String existingAggregatedTaxonomy = this.collection.getString(AJEntityCollection.AGGREGATED_TAXONOMY);
+        String existingGutCodes = this.collection.getString(AJEntityCollection.GUT_CODES);
+        String existingTaxonomy = this.collection.getString(AJEntityCollection.TAXONOMY);
 
-        this.aggregatedGutCodes = (existingAggregatedGutCodes != null && !existingAggregatedGutCodes.isEmpty())
-            ? new JsonObject(existingAggregatedGutCodes) : new JsonObject();
-        this.aggregatedTaxonomy = (existingAggregatedTaxonomy != null && !existingAggregatedTaxonomy.isEmpty())
-            ? new JsonObject(existingAggregatedTaxonomy) : new JsonObject();
+        this.gutCodes = (existingGutCodes != null && !existingGutCodes.isEmpty())
+            ? new JsonObject(existingGutCodes) : new JsonObject();
+        this.taxonomy = (existingTaxonomy != null && !existingTaxonomy.isEmpty())
+            ? new JsonObject(existingTaxonomy) : new JsonObject();
 
-        JsonObject tagDiff = calculateTagDifference();
-        // If no tag difference is found in existing tags and in request,
-        // silently ignore and return success without event
-        if (tagDiff == null || tagDiff.isEmpty()) {
-            LOGGER.debug("no tag difference found, skipping.");
-            return new ExecutionResult<>(
-                MessageResponseFactory.createNoContentResponse(resourceBundle.getString("updated")),
-                ExecutionResult.ExecutionStatus.SUCCESSFUL);
-        }
+        JsonObject newTags = this.context.request().getJsonObject(AJEntityCollection.TAXONOMY);
+        Map<String, String> frameworkToGutCodeMapping =
+            GUTCodeLookupHelper.populateGutCodesToTaxonomyMapping(newTags.fieldNames());
         
-        this.tagsAdded = tagDiff.getJsonObject(TAGS_ADDED);
-        this.tagsRemoved = tagDiff.getJsonObject(TAGS_REMOVED);
-
-        if (this.tagsRemoved != null && !this.tagsRemoved.isEmpty()) {
-            processTagRemoval();
-        }
-
-        if (this.tagsAdded != null && !this.tagsAdded.isEmpty()) {
-            processTagAddition();
-        }
-
-        this.collection.setAggregatedGutCodes(this.aggregatedGutCodes.toString());
-        this.collection.setAggregatedTaxonomy(this.aggregatedTaxonomy.toString());
+        newTags.forEach(entry -> {
+            this.taxonomy.put(entry.getKey(), entry.getValue());
+        });
+        
+        this.collection.setGutCodes(this.gutCodes.toString());
+        this.collection.setTaxonomy(this.taxonomy.toString());
 
         boolean result = this.collection.save();
         if (!result) {
@@ -138,26 +123,27 @@ public class AggregateResourceTagsAtCollectionHandler implements DBHandler {
                 MessageResponseFactory.createInternalErrorResponse(resourceBundle.getString("internal.store.error")),
                 ExecutionResult.ExecutionStatus.FAILED);
         }
+        
+        JsonObject tagsAdded = new JsonObject();
+        tagsAdded.put(TAGS_ADDED, newTags.copy());
 
         // Check if the collection is in lesson. If yes, calculate the tag
         // difference and prepare tag aggregation request to send to tag
         // aggregation handler
         String lessonId = this.collection.getString(AJEntityCollection.LESSON_ID);
         if (lessonId != null && !lessonId.isEmpty()) {
-            if (tagDiff != null) {
                 return new ExecutionResult<>(
                     MessageResponseFactory.createNoContentResponse(resourceBundle.getString("updated"),
                         EventBuilderFactory.getAggregateResourceTagAtCollectionEventBuilder(context.collectionId(),
-                            tagDiff),
-                        TagAggregatorRequestBuilderFactory.getLessonTagAggregatorRequestBuilder(lessonId, tagDiff)),
+                            tagsAdded),
+                        TagAggregatorRequestBuilderFactory.getLessonTagAggregatorRequestBuilder(lessonId, tagsAdded)),
                     ExecutionResult.ExecutionStatus.SUCCESSFUL);
-            }
         }
 
         // If collection is standalone return without processing tag aggregation
         return new ExecutionResult<>(
             MessageResponseFactory.createNoContentResponse(resourceBundle.getString("updated"),
-                EventBuilderFactory.getAggregateResourceTagAtCollectionEventBuilder(context.collectionId(), tagDiff)),
+                EventBuilderFactory.getAggregateResourceTagAtCollectionEventBuilder(context.collectionId(), tagsAdded)),
             ExecutionResult.ExecutionStatus.SUCCESSFUL);
     }
 
@@ -169,84 +155,4 @@ public class AggregateResourceTagsAtCollectionHandler implements DBHandler {
     private static class DefaultPayloadValidator implements PayloadValidator {
     }
 
-    private void processTagAddition() {
-        Map<String, String> frameworkToGutCodeMapping =
-            GUTCodeLookupHelper.populateGutCodesToTaxonomyMapping(this.tagsAdded.fieldNames());
-
-        frameworkToGutCodeMapping.keySet().forEach(gutCode -> {
-            // If the gut code to be added is already exists in aggregated gut
-            // codes, then increase competency count by 1
-            // If it does not exists, then add new
-            if (this.aggregatedGutCodes.containsKey(gutCode)) {
-                int competencyCount = this.aggregatedGutCodes.getInteger(gutCode);
-                this.aggregatedGutCodes.put(gutCode, (competencyCount + 1));
-            } else {
-                this.aggregatedGutCodes.put(gutCode, 1);
-                this.aggregatedTaxonomy.put(frameworkToGutCodeMapping.get(gutCode),
-                    this.tagsAdded.getJsonObject(frameworkToGutCodeMapping.get(gutCode)));
-            }
-        });
-    }
-
-    private void processTagRemoval() {
-
-        Map<String, String> frameworkToGutCodeMapping =
-            GUTCodeLookupHelper.populateGutCodesToTaxonomyMapping(this.tagsRemoved.fieldNames());
-
-        frameworkToGutCodeMapping.keySet().forEach(gutCode -> {
-            if (this.aggregatedGutCodes.containsKey(gutCode)) {
-                int competencyCount = this.aggregatedGutCodes.getInteger(gutCode);
-                // Competency count 1 means this competency is tagged only once
-                // and across lessons. Hence can be removed
-                // Competency count greater than 1 means this competency is
-                // tagged multiple times across lesson, so we will just reduce
-                // the competency count
-                if (competencyCount == 1) {
-                    this.aggregatedGutCodes.remove(gutCode);
-                    aggregatedTaxonomy.remove(frameworkToGutCodeMapping.get(gutCode));
-                } else if (competencyCount > 1) {
-                    this.aggregatedGutCodes.put(gutCode, (competencyCount - 1));
-                }
-            }
-
-            // Do nothing of the gut code which is not present in existing
-            // aggregated gut codes
-        });
-    }
-
-    private JsonObject calculateTagDifference() {
-        JsonObject result = new JsonObject();
-        String existingTagsAsString = this.collection.getString(AJEntityCollection.AGGREGATED_TAXONOMY);
-        JsonObject existingTags = existingTagsAsString != null && !existingTagsAsString.isEmpty()
-            ? new JsonObject(existingTagsAsString) : new JsonObject();
-        JsonObject newTags = this.context.request().getJsonObject(AJEntityCollection.AGGREGATED_TAXONOMY);
-
-        if (existingTags.isEmpty() && newTags != null && !newTags.isEmpty()) {
-            result.put(TAGS_ADDED, newTags.copy());
-            result.put(TAGS_REMOVED, new JsonObject());
-        } else if (!existingTags.isEmpty() && (newTags == null || newTags.isEmpty())) {
-            result.put(TAGS_ADDED, new JsonObject());
-            result.put(TAGS_REMOVED, existingTags.copy());
-        } else if (!existingTags.isEmpty() && newTags != null && !newTags.isEmpty()) {
-            JsonObject toBeAdded = new JsonObject();
-            JsonObject toBeRemoved = existingTags.copy();
-            newTags.forEach(entry -> {
-                String key = entry.getKey();
-                if (toBeRemoved.containsKey(key)) {
-                    toBeRemoved.remove(key);
-                } else {
-                    toBeAdded.put(key, entry.getValue());
-                }
-            });
-
-            if (toBeAdded.isEmpty() && toBeRemoved.isEmpty()) {
-                return null;
-            }
-
-            result.put(TAGS_ADDED, toBeAdded);
-            result.put(TAGS_REMOVED, toBeRemoved);
-        }
-
-        return result;
-    }
 }

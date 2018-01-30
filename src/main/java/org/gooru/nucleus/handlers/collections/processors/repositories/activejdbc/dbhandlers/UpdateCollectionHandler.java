@@ -1,5 +1,7 @@
 package org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbhandlers;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.ResourceBundle;
 
@@ -7,19 +9,18 @@ import org.gooru.nucleus.handlers.collections.constants.MessageConstants;
 import org.gooru.nucleus.handlers.collections.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.collections.processors.events.EventBuilderFactory;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbhelpers.GUTCodeLookupHelper;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityCollection;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entitybuilders.EntityBuilder;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.validators.PayloadValidator;
 import org.gooru.nucleus.handlers.collections.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponseFactory;
-import org.gooru.nucleus.handlers.collections.processors.tagaggregator.TagAggregatorRequestBuilder;
 import org.gooru.nucleus.handlers.collections.processors.tagaggregator.TagAggregatorRequestBuilderFactory;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -103,6 +104,15 @@ class UpdateCollectionHandler implements DBHandler {
         new DefaultAJEntityCollectionEntityBuilder().build(collectionToUpdate, context.request(),
             AJEntityCollection.getConverterRegistry());
 
+        String existingTagsAsString = this.collection.getString(AJEntityCollection.TAXONOMY);
+        JsonObject existingTags = existingTagsAsString != null && !existingTagsAsString.isEmpty()
+            ? new JsonObject(existingTagsAsString) : new JsonObject();
+        if (!existingTags.isEmpty()) {
+            Map<String, String> frameworkToGutCodeMapping =
+                GUTCodeLookupHelper.populateGutCodesToTaxonomyMapping(existingTags.fieldNames());
+            collectionToUpdate.setGutCodes(toPostgresArrayString(frameworkToGutCodeMapping.keySet()));
+        }
+
         boolean result = collectionToUpdate.save();
         if (!result) {
             LOGGER.error("Collection with id '{}' failed to save", context.collectionId());
@@ -120,7 +130,7 @@ class UpdateCollectionHandler implements DBHandler {
         // aggregation handler
         String lessonId = this.collection.getString(AJEntityCollection.LESSON_ID);
         if (lessonId != null && !lessonId.isEmpty()) {
-            JsonObject tagDiff = calculateTagDifference();
+            JsonObject tagDiff = calculateTagDifference(existingTags);
             if (tagDiff != null) {
                 return new ExecutionResult<>(
                     MessageResponseFactory.createNoContentResponse(resourceBundle.getString("updated"),
@@ -148,11 +158,8 @@ class UpdateCollectionHandler implements DBHandler {
     private static class DefaultAJEntityCollectionEntityBuilder implements EntityBuilder<AJEntityCollection> {
     }
 
-    private JsonObject calculateTagDifference() {
+    private JsonObject calculateTagDifference(JsonObject existingTags) {
         JsonObject result = new JsonObject();
-        String existingTagsAsString = this.collection.getString(AJEntityCollection.TAXONOMY);
-        JsonObject existingTags = existingTagsAsString != null && !existingTagsAsString.isEmpty()
-            ? new JsonObject(existingTagsAsString) : new JsonObject();
         JsonObject newTags = this.context.request().getJsonObject(AJEntityCollection.TAXONOMY);
 
         if (existingTags.isEmpty() && newTags != null && !newTags.isEmpty()) {
@@ -182,5 +189,23 @@ class UpdateCollectionHandler implements DBHandler {
         }
 
         return result;
+    }
+
+    private static String toPostgresArrayString(Collection<String> input) {
+        Iterator<String> it = input.iterator();
+        if (!it.hasNext()) {
+            return "{}";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append('{');
+        for (;;) {
+            String s = it.next();
+            sb.append('"').append(s).append('"');
+            if (!it.hasNext()) {
+                return sb.append('}').toString();
+            }
+            sb.append(',');
+        }
     }
 }
