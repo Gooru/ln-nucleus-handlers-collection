@@ -56,8 +56,4 @@ public class AJCollectionRepo implements CollectionRepo {
         return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildAddResourceToCollectionHandler(context));
     }
 
-    @Override
-    public MessageResponse aggregateResourceTagsAtCollection() {
-        return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildAggregateResourceTagsAtCollectionHandler(context));
-    }
 }

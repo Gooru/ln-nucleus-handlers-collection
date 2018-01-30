@@ -103,13 +103,11 @@ class UpdateCollectionHandler implements DBHandler {
         // Now auto populate is done, we need to setup the converter machinery
         new DefaultAJEntityCollectionEntityBuilder().build(collectionToUpdate, context.request(),
             AJEntityCollection.getConverterRegistry());
-
-        String existingTagsAsString = this.collection.getString(AJEntityCollection.TAXONOMY);
-        JsonObject existingTags = existingTagsAsString != null && !existingTagsAsString.isEmpty()
-            ? new JsonObject(existingTagsAsString) : new JsonObject();
-        if (!existingTags.isEmpty()) {
+        
+        JsonObject newTags = this.context.request().getJsonObject(AJEntityCollection.TAXONOMY);
+        if (!newTags.isEmpty()) {
             Map<String, String> frameworkToGutCodeMapping =
-                GUTCodeLookupHelper.populateGutCodesToTaxonomyMapping(existingTags.fieldNames());
+                GUTCodeLookupHelper.populateGutCodesToTaxonomyMapping(newTags.fieldNames());
             collectionToUpdate.setGutCodes(toPostgresArrayString(frameworkToGutCodeMapping.keySet()));
         }
 
@@ -130,7 +128,7 @@ class UpdateCollectionHandler implements DBHandler {
         // aggregation handler
         String lessonId = this.collection.getString(AJEntityCollection.LESSON_ID);
         if (lessonId != null && !lessonId.isEmpty()) {
-            JsonObject tagDiff = calculateTagDifference(existingTags);
+            JsonObject tagDiff = calculateTagDifference();
             if (tagDiff != null) {
                 return new ExecutionResult<>(
                     MessageResponseFactory.createNoContentResponse(resourceBundle.getString("updated"),
@@ -158,8 +156,11 @@ class UpdateCollectionHandler implements DBHandler {
     private static class DefaultAJEntityCollectionEntityBuilder implements EntityBuilder<AJEntityCollection> {
     }
 
-    private JsonObject calculateTagDifference(JsonObject existingTags) {
+    private JsonObject calculateTagDifference() {
         JsonObject result = new JsonObject();
+        String existingTagsAsString = this.collection.getString(AJEntityCollection.TAXONOMY);
+        JsonObject existingTags = existingTagsAsString != null && !existingTagsAsString.isEmpty()
+            ? new JsonObject(existingTagsAsString) : new JsonObject();
         JsonObject newTags = this.context.request().getJsonObject(AJEntityCollection.TAXONOMY);
 
         if (existingTags.isEmpty() && newTags != null && !newTags.isEmpty()) {
