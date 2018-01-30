@@ -62,8 +62,8 @@ public class AJEntityCollection extends Model {
 
     // Queries used
     public static final String AUTHORIZER_QUERY =
-        "select id, course_id, unit_id, lesson_id, owner_id, creator_id, publish_date, collaborator, tenant, taxonomy, aggregated_taxonomy, "
-            + "aggregated_gut_codes, tenant_root from collection where format = ?::content_container_type and id = ?::uuid and is_deleted ="
+        "select id, course_id, unit_id, lesson_id, owner_id, creator_id, publish_date, collaborator, tenant, taxonomy, "
+            + "tenant_root from collection where format = ?::content_container_type and id = ?::uuid and is_deleted ="
             + " ?";
 
     public static final String AUTH_FILTER = "id = ?::uuid and (owner_id = ?::uuid or collaborator ?? ?);";
@@ -71,14 +71,14 @@ public class AJEntityCollection extends Model {
     public static final String FETCH_QUERY =
         "select id, title, owner_id, creator_id, original_creator_id, original_collection_id, publish_date, subformat, "
             + "publish_status, thumbnail, learning_objective, license, metadata, taxonomy, setting, grading, "
-            + "visible_on_profile, collaborator, course_id, unit_id, lesson_id, tenant, tenant_root, aggregated_taxonomy from collection "
+            + "visible_on_profile, collaborator, course_id, unit_id, lesson_id, tenant, tenant_root from collection "
             + "where id = ?::uuid and format = " + "'collection'::content_container_type and is_deleted = false";
     public static final String COURSE_COLLABORATOR_QUERY =
         "select collaborator from course where id = ?::uuid and is_deleted = false";
     public static final List<String> FETCH_QUERY_FIELD_LIST = Arrays
         .asList("id", "title", "owner_id", "creator_id", "original_creator_id", "original_collection_id",
             "publish_date", "thumbnail", "learning_objective", "license", "metadata", "taxonomy", "setting", "grading",
-            "visible_on_profile", "course_id", "unit_id", "lesson_id", "subformat", "aggregated_taxonomy");
+            "visible_on_profile", "course_id", "unit_id", "lesson_id", "subformat");
 
     public static final Set<String> EDITABLE_FIELDS = new HashSet<>(Arrays
         .asList(TITLE, THUMBNAIL, LEARNING_OBJECTIVE, METADATA, TAXONOMY, URL, LOGIN_REQUIRED, VISIBLE_ON_PROFILE,
@@ -115,7 +115,6 @@ public class AJEntityCollection extends Model {
             .put(GRADING, (fieldValue -> FieldConverter.convertFieldToNamedType(fieldValue, GRADING_TYPE_NAME)));
         converterMap.put(TENANT, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
         converterMap.put(TENANT_ROOT, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
-        converterMap.put(GUT_CODES, (FieldConverter::convertFieldToJson));
         return Collections.unmodifiableMap(converterMap);
     }
 
