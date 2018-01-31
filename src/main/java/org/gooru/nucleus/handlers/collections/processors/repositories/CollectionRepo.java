@@ -22,6 +22,4 @@ public interface CollectionRepo {
 
     MessageResponse addResourceToCollection();
     
-    MessageResponse aggregateResourceTagsAtCollection();
-
 }

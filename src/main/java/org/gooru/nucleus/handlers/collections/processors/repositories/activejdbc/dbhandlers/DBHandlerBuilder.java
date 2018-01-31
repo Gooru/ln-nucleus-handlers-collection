@@ -43,7 +43,4 @@ public final class DBHandlerBuilder {
         return new ReorderContentInCollectionHandler(context);
     }
 
-    public static DBHandler buildAggregateResourceTagsAtCollectionHandler(ProcessorContext context) {
-        return new AggregateResourceTagsAtCollectionHandler(context);
-    }
 }

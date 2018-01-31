@@ -65,12 +65,6 @@ public enum CommandProcessorBuilder {
             return new CollectionUpdateProcessor(context);
         }
     },
-    COLLECTION_RESOURCE_TAG_AGGREGATE(MessageConstants.MSG_OP_COLLECTION_RESOURCE_TAG_AGGREGATE) {
-        @Override
-        public Processor build(ProcessorContext context) {
-            return new CollectionResourceTagAggregateProcessor(context);
-        }
-    },
     COLLECTION_CREATE(MessageConstants.MSG_OP_COLLECTION_CREATE) {
         @Override
         public Processor build(ProcessorContext context) {
