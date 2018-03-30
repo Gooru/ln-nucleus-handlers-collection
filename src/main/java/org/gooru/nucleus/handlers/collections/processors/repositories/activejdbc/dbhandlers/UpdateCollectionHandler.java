@@ -105,7 +105,7 @@ class UpdateCollectionHandler implements DBHandler {
             AJEntityCollection.getConverterRegistry());
         
         JsonObject newTags = this.context.request().getJsonObject(AJEntityCollection.TAXONOMY);
-        if (!newTags.isEmpty()) {
+        if (newTags != null && !newTags.isEmpty()) {
             Map<String, String> frameworkToGutCodeMapping =
                 GUTCodeLookupHelper.populateGutCodesToTaxonomyMapping(newTags.fieldNames());
             collectionToUpdate.setGutCodes(toPostgresArrayString(frameworkToGutCodeMapping.keySet()));
