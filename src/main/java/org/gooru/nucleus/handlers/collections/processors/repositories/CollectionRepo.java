@@ -21,5 +21,5 @@ public interface CollectionRepo {
     MessageResponse addQuestionToCollection();
 
     MessageResponse addResourceToCollection();
-
+    
 }

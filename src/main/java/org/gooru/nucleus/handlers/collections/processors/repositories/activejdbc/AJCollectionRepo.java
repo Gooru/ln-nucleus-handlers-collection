@@ -55,4 +55,5 @@ public class AJCollectionRepo implements CollectionRepo {
     public MessageResponse addResourceToCollection() {
         return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildAddResourceToCollectionHandler(context));
     }
+
 }

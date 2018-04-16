@@ -3,6 +3,7 @@ package org.gooru.nucleus.handlers.collections.processors.responses;
 import org.gooru.nucleus.handlers.collections.constants.HttpConstants;
 import org.gooru.nucleus.handlers.collections.constants.MessageConstants;
 import org.gooru.nucleus.handlers.collections.processors.events.EventBuilder;
+import org.gooru.nucleus.handlers.collections.processors.tagaggregator.TagAggregatorRequestBuilder;
 
 import io.vertx.core.json.JsonObject;
 
@@ -59,11 +60,18 @@ public final class MessageResponseFactory {
         return new MessageResponse.Builder().successful().setStatusNoOutput()
             .setResponseBody(new JsonObject().put(MessageConstants.MSG_MESSAGE, message)).build();
     }
-
+    
     public static MessageResponse createNoContentResponse(String message, EventBuilder eventBuilder) {
         return new MessageResponse.Builder().successful().setStatusNoOutput()
             .setResponseBody(new JsonObject().put(MessageConstants.MSG_MESSAGE, message))
             .setEventData(eventBuilder.build()).build();
+    }
+
+    public static MessageResponse createNoContentResponse(String message, EventBuilder eventBuilder,
+        TagAggregatorRequestBuilder tagAggregatorRequestBuilder) {
+        return new MessageResponse.Builder().successful().setStatusNoOutput()
+            .setResponseBody(new JsonObject().put(MessageConstants.MSG_MESSAGE, message))
+            .setEventData(eventBuilder.build()).setTagsToAggregate(tagAggregatorRequestBuilder.build()).build();
     }
 
     public static MessageResponse createCreatedResponse(String locationHeader) {

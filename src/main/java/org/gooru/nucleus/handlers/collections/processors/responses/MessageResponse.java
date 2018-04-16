@@ -17,6 +17,7 @@ public final class MessageResponse {
     private final DeliveryOptions deliveryOptions;
     private final JsonObject reply;
     private final JsonObject event;
+    private final JsonObject tagsToAggregate;
 
     // Private constructor
     private MessageResponse(JsonObject response) {
@@ -24,6 +25,7 @@ public final class MessageResponse {
             response.getString(MessageConstants.MSG_OP_STATUS));
         this.reply = response.getJsonObject(MessageConstants.RESP_CONTAINER_MBUS);
         this.event = response.getJsonObject(MessageConstants.RESP_CONTAINER_EVENT);
+        this.tagsToAggregate = response.getJsonObject(MessageConstants.RESP_CONTAINER_TAGS_TO_AGGREGATE);
     }
 
     public DeliveryOptions deliveryOptions() {
@@ -37,6 +39,10 @@ public final class MessageResponse {
     public JsonObject event() {
         return this.event;
     }
+    
+    public JsonObject tagsToAggregate() {
+        return this.tagsToAggregate;
+    }
 
     // Public builder with validations
     public static class Builder {
@@ -45,6 +51,7 @@ public final class MessageResponse {
         private JsonObject responseBody = null;
         private JsonObject headers = null;
         private JsonObject eventData = null;
+        private JsonObject tagsToAggregate = null;
 
         public Builder() {
             this.headers = new JsonObject();
@@ -136,6 +143,11 @@ public final class MessageResponse {
             this.eventData = eventData;
             return this;
         }
+        
+        public Builder setTagsToAggregate(JsonObject tagsToAggregate) {
+            this.tagsToAggregate = tagsToAggregate;
+            return this;
+        }
 
         public MessageResponse build() {
             JsonObject result;
@@ -149,6 +161,10 @@ public final class MessageResponse {
 
                 if (this.eventData != null && !this.eventData.isEmpty()) {
                     result.put(MessageConstants.RESP_CONTAINER_EVENT, this.eventData);
+                }
+                
+                if (this.tagsToAggregate != null && !this.tagsToAggregate.isEmpty()) {
+                    result.put(MessageConstants.RESP_CONTAINER_TAGS_TO_AGGREGATE, this.tagsToAggregate);
                 }
             }
             return new MessageResponse(result);

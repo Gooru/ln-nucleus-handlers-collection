@@ -42,4 +42,5 @@ public final class DBHandlerBuilder {
     public static DBHandler buildReorderContentInCollectionHandler(ProcessorContext context) {
         return new ReorderContentInCollectionHandler(context);
     }
+
 }

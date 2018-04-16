@@ -1,5 +1,7 @@
 package org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbhandlers;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.ResourceBundle;
 
@@ -7,12 +9,14 @@ import org.gooru.nucleus.handlers.collections.constants.MessageConstants;
 import org.gooru.nucleus.handlers.collections.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.collections.processors.events.EventBuilderFactory;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbhelpers.GUTCodeLookupHelper;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityCollection;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entitybuilders.EntityBuilder;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.validators.PayloadValidator;
 import org.gooru.nucleus.handlers.collections.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponseFactory;
+import org.gooru.nucleus.handlers.collections.processors.tagaggregator.TagAggregatorRequestBuilderFactory;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +30,10 @@ class UpdateCollectionHandler implements DBHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(UpdateCollectionHandler.class);
     private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
     private final ProcessorContext context;
+    private AJEntityCollection collection;
+
+    private static final String TAGS_ADDED = "tags_added";
+    private static final String TAGS_REMOVED = "tags_removed";
 
     public UpdateCollectionHandler(ProcessorContext context) {
         this.context = context;
@@ -82,30 +90,55 @@ class UpdateCollectionHandler implements DBHandler {
                     .createNotFoundResponse(resourceBundle.getString("collection.id") + context.collectionId()),
                 ExecutionResult.ExecutionStatus.FAILED);
         }
-        AJEntityCollection collection = collections.get(0);
-        return AuthorizerBuilder.buildUpdateAuthorizer(this.context).authorize(collection);
+        this.collection = collections.get(0);
+        return AuthorizerBuilder.buildUpdateAuthorizer(this.context).authorize(this.collection);
     }
 
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
-        AJEntityCollection collection = new AJEntityCollection();
-        collection.setIdWithConverter(context.collectionId());
-        collection.setModifierId(context.userId());
-        // Now auto populate is done, we need to setup the converter machinery
-        new DefaultAJEntityCollectionEntityBuilder().build(collection, context.request(),
-            AJEntityCollection.getConverterRegistry());
+        AJEntityCollection collectionToUpdate = new AJEntityCollection();
+        collectionToUpdate.setIdWithConverter(context.collectionId());
+        collectionToUpdate.setModifierId(context.userId());
 
-        boolean result = collection.save();
+        // Now auto populate is done, we need to setup the converter machinery
+        new DefaultAJEntityCollectionEntityBuilder().build(collectionToUpdate, context.request(),
+            AJEntityCollection.getConverterRegistry());
+        
+        JsonObject newTags = this.context.request().getJsonObject(AJEntityCollection.TAXONOMY);
+        if (newTags != null && !newTags.isEmpty()) {
+            Map<String, String> frameworkToGutCodeMapping =
+                GUTCodeLookupHelper.populateGutCodesToTaxonomyMapping(newTags.fieldNames());
+            collectionToUpdate.setGutCodes(toPostgresArrayString(frameworkToGutCodeMapping.keySet()));
+        }
+
+        boolean result = collectionToUpdate.save();
         if (!result) {
             LOGGER.error("Collection with id '{}' failed to save", context.collectionId());
-            if (collection.hasErrors()) {
-                Map<String, String> map = collection.errors();
+            if (collectionToUpdate.hasErrors()) {
+                Map<String, String> map = collectionToUpdate.errors();
                 JsonObject errors = new JsonObject();
                 map.forEach(errors::put);
                 return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors),
                     ExecutionResult.ExecutionStatus.FAILED);
             }
         }
+
+        // Check if the collection is in lesson. If yes, calculate the tag
+        // difference and prepare tag aggregation request to send to tag
+        // aggregation handler
+        String lessonId = this.collection.getString(AJEntityCollection.LESSON_ID);
+        if (lessonId != null && !lessonId.isEmpty()) {
+            JsonObject tagDiff = calculateTagDifference();
+            if (tagDiff != null) {
+                return new ExecutionResult<>(
+                    MessageResponseFactory.createNoContentResponse(resourceBundle.getString("updated"),
+                        EventBuilderFactory.getUpdateCollectionEventBuilder(context.collectionId()),
+                        TagAggregatorRequestBuilderFactory.getLessonTagAggregatorRequestBuilder(lessonId, tagDiff)),
+                    ExecutionResult.ExecutionStatus.SUCCESSFUL);
+            }
+        }
+
+        // Otherwise return without tag aggregation
         return new ExecutionResult<>(
             MessageResponseFactory.createNoContentResponse(resourceBundle.getString("updated"),
                 EventBuilderFactory.getUpdateCollectionEventBuilder(context.collectionId())),
@@ -121,5 +154,59 @@ class UpdateCollectionHandler implements DBHandler {
     }
 
     private static class DefaultAJEntityCollectionEntityBuilder implements EntityBuilder<AJEntityCollection> {
+    }
+
+    private JsonObject calculateTagDifference() {
+        JsonObject result = new JsonObject();
+        String existingTagsAsString = this.collection.getString(AJEntityCollection.TAXONOMY);
+        JsonObject existingTags = existingTagsAsString != null && !existingTagsAsString.isEmpty()
+            ? new JsonObject(existingTagsAsString) : new JsonObject();
+        JsonObject newTags = this.context.request().getJsonObject(AJEntityCollection.TAXONOMY);
+
+        if (existingTags.isEmpty() && newTags != null && !newTags.isEmpty()) {
+            result.put(TAGS_ADDED, newTags.copy());
+            result.put(TAGS_REMOVED, new JsonObject());
+        } else if (!existingTags.isEmpty() && (newTags == null || newTags.isEmpty())) {
+            result.put(TAGS_ADDED, new JsonObject());
+            result.put(TAGS_REMOVED, existingTags.copy());
+        } else if (!existingTags.isEmpty() && newTags != null && !newTags.isEmpty()) {
+            JsonObject toBeAdded = new JsonObject();
+            JsonObject toBeRemoved = existingTags.copy();
+            newTags.forEach(entry -> {
+                String key = entry.getKey();
+                if (toBeRemoved.containsKey(key)) {
+                    toBeRemoved.remove(key);
+                } else {
+                    toBeAdded.put(key, entry.getValue());
+                }
+            });
+
+            if (toBeAdded.isEmpty() && toBeRemoved.isEmpty()) {
+                return null;
+            }
+
+            result.put(TAGS_ADDED, toBeAdded);
+            result.put(TAGS_REMOVED, toBeRemoved);
+        }
+
+        return result;
+    }
+
+    private static String toPostgresArrayString(Collection<String> input) {
+        Iterator<String> it = input.iterator();
+        if (!it.hasNext()) {
+            return "{}";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append('{');
+        for (;;) {
+            String s = it.next();
+            sb.append('"').append(s).append('"');
+            if (!it.hasNext()) {
+                return sb.append('}').toString();
+            }
+            sb.append(',');
+        }
     }
 }
