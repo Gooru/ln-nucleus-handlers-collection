@@ -1,7 +1,5 @@
 package org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbhandlers;
 
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.ResourceBundle;
 
@@ -17,6 +15,7 @@ import org.gooru.nucleus.handlers.collections.processors.responses.ExecutionResu
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponseFactory;
 import org.gooru.nucleus.handlers.collections.processors.tagaggregator.TagAggregatorRequestBuilderFactory;
+import org.gooru.nucleus.handlers.collections.processors.utils.CommonUtils;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -108,7 +107,7 @@ class UpdateCollectionHandler implements DBHandler {
         if (newTags != null && !newTags.isEmpty()) {
             Map<String, String> frameworkToGutCodeMapping =
                 GUTCodeLookupHelper.populateGutCodesToTaxonomyMapping(newTags.fieldNames());
-            collectionToUpdate.setGutCodes(toPostgresArrayString(frameworkToGutCodeMapping.keySet()));
+            collectionToUpdate.setGutCodes(CommonUtils.toPostgresArrayString(frameworkToGutCodeMapping.keySet()));
         }
 
         boolean result = collectionToUpdate.save();
@@ -190,23 +189,5 @@ class UpdateCollectionHandler implements DBHandler {
         }
 
         return result;
-    }
-
-    private static String toPostgresArrayString(Collection<String> input) {
-        Iterator<String> it = input.iterator();
-        if (!it.hasNext()) {
-            return "{}";
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append('{');
-        for (;;) {
-            String s = it.next();
-            sb.append('"').append(s).append('"');
-            if (!it.hasNext()) {
-                return sb.append('}').toString();
-            }
-            sb.append(',');
-        }
     }
 }

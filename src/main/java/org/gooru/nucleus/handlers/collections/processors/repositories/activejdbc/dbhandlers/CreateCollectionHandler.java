@@ -7,6 +7,7 @@ import org.gooru.nucleus.handlers.collections.constants.MessageConstants;
 import org.gooru.nucleus.handlers.collections.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.collections.processors.events.EventBuilderFactory;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbhelpers.GUTCodeLookupHelper;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbutils.LicenseUtil;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityCollection;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entitybuilders.EntityBuilder;
@@ -14,6 +15,7 @@ import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc
 import org.gooru.nucleus.handlers.collections.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponseFactory;
+import org.gooru.nucleus.handlers.collections.processors.utils.CommonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,6 +74,13 @@ class CreateCollectionHandler implements DBHandler {
         autoPopulateFields(collection);
         new DefaultAJEntityCollectionEntityBuilder().build(collection, context.request(),
             AJEntityCollection.getConverterRegistry());
+        
+        JsonObject newTags = this.context.request().getJsonObject(AJEntityCollection.TAXONOMY);
+        if (newTags != null && !newTags.isEmpty()) {
+            Map<String, String> frameworkToGutCodeMapping =
+                GUTCodeLookupHelper.populateGutCodesToTaxonomyMapping(newTags.fieldNames());
+            collection.setGutCodes(CommonUtils.toPostgresArrayString(frameworkToGutCodeMapping.keySet()));
+        }
 
         boolean result = collection.save();
         if (!result) {
