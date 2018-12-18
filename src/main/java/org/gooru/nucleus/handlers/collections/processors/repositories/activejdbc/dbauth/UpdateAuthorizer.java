@@ -1,7 +1,7 @@
 package org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbauth;
 
+import io.vertx.core.json.JsonArray;
 import java.util.ResourceBundle;
-
 import org.gooru.nucleus.handlers.collections.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityCollection;
 import org.gooru.nucleus.handlers.collections.processors.responses.ExecutionResult;
@@ -12,63 +12,64 @@ import org.javalite.activejdbc.DBException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.json.JsonArray;
-
 /**
  * Created by ashish on 29/1/16.
  */
 class UpdateAuthorizer implements Authorizer<AJEntityCollection> {
 
-    private final ProcessorContext context;
-    private final Logger LOGGER = LoggerFactory.getLogger(Authorizer.class);
-    private final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
+  private final ProcessorContext context;
+  private final Logger LOGGER = LoggerFactory.getLogger(Authorizer.class);
+  private final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
 
-    UpdateAuthorizer(ProcessorContext context) {
-        this.context = context;
-    }
+  UpdateAuthorizer(ProcessorContext context) {
+    this.context = context;
+  }
 
-    @Override
-    public ExecutionResult<MessageResponse> authorize(AJEntityCollection collection) {
-        String ownerId = collection.getString(AJEntityCollection.OWNER_ID);
-        String courseId = collection.getString(AJEntityCollection.COURSE_ID);
-        long authRecordCount;
-        // If this collection is not part of course, then user should be either
-        // owner or collaborator on course
-        if (courseId != null) {
-            try {
-                authRecordCount = Base.count(AJEntityCollection.TABLE_COURSE, AJEntityCollection.AUTH_FILTER, courseId,
-                    context.userId(), context.userId());
-                if (authRecordCount >= 1) {
-                    return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
-                }
-            } catch (DBException e) {
-                LOGGER.error("Error checking authorization for update for Collection '{}' for course '{}'",
-                    context.collectionId(), courseId, e);
-                return new ExecutionResult<>(
-                    MessageResponseFactory
-                        .createInternalErrorResponse(resourceBundle.getString("internal.error.authorization.checking")),
-                    ExecutionResult.ExecutionStatus.FAILED);
-            }
-        } else {
-            // Collection is not part of course, hence we need user to be either
-            // owner or collaborator on collection
-            if (context.userId().equalsIgnoreCase(ownerId)) {
-                // Owner is fine
-                return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
-            } else {
-                String collaborators = collection.getString(AJEntityCollection.COLLABORATOR);
-                if (collaborators != null && !collaborators.isEmpty()) {
-                    JsonArray collaboratorsArray = new JsonArray(collaborators);
-                    if (collaboratorsArray.contains(context.userId())) {
-                        return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
-                    }
-                }
-            }
+  @Override
+  public ExecutionResult<MessageResponse> authorize(AJEntityCollection collection) {
+    String ownerId = collection.getString(AJEntityCollection.OWNER_ID);
+    String courseId = collection.getString(AJEntityCollection.COURSE_ID);
+    long authRecordCount;
+    // If this collection is not part of course, then user should be either
+    // owner or collaborator on course
+    if (courseId != null) {
+      try {
+        authRecordCount = Base
+            .count(AJEntityCollection.TABLE_COURSE, AJEntityCollection.AUTH_FILTER, courseId,
+                context.userId(), context.userId());
+        if (authRecordCount >= 1) {
+          return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
         }
-        LOGGER.warn("User: '{}' is not owner/collaborator of collection: '{}' or owner/collaborator on course",
-            context.userId(), context.collectionId());
+      } catch (DBException e) {
+        LOGGER.error("Error checking authorization for update for Collection '{}' for course '{}'",
+            context.collectionId(), courseId, e);
         return new ExecutionResult<>(
-            MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")),
+            MessageResponseFactory
+                .createInternalErrorResponse(
+                    resourceBundle.getString("internal.error.authorization.checking")),
             ExecutionResult.ExecutionStatus.FAILED);
+      }
+    } else {
+      // Collection is not part of course, hence we need user to be either
+      // owner or collaborator on collection
+      if (context.userId().equalsIgnoreCase(ownerId)) {
+        // Owner is fine
+        return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
+      } else {
+        String collaborators = collection.getString(AJEntityCollection.COLLABORATOR);
+        if (collaborators != null && !collaborators.isEmpty()) {
+          JsonArray collaboratorsArray = new JsonArray(collaborators);
+          if (collaboratorsArray.contains(context.userId())) {
+            return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
+          }
+        }
+      }
     }
+    LOGGER.warn(
+        "User: '{}' is not owner/collaborator of collection: '{}' or owner/collaborator on course",
+        context.userId(), context.collectionId());
+    return new ExecutionResult<>(
+        MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")),
+        ExecutionResult.ExecutionStatus.FAILED);
+  }
 }

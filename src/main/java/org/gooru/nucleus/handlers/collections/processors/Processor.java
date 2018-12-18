@@ -3,5 +3,6 @@ package org.gooru.nucleus.handlers.collections.processors;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
 
 public interface Processor {
-    MessageResponse process();
+
+  MessageResponse process();
 }
