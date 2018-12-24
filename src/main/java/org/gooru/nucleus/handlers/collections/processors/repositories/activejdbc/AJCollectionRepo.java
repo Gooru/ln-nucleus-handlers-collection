@@ -64,5 +64,29 @@ public class AJCollectionRepo implements CollectionRepo {
     return TransactionExecutor
         .executeTransaction(DBHandlerBuilder.buildAddResourceToCollectionHandler(context));
   }
+  
+  @Override
+  public MessageResponse createExternalCollection() {
+    return TransactionExecutor
+        .executeTransaction(DBHandlerBuilder.buildCreateExternalCollectionHandler(context));
+  }
+  
+  @Override
+  public MessageResponse updateExternalCollection() {
+    return TransactionExecutor
+        .executeTransaction(DBHandlerBuilder.buildUpdateExternalCollectionHandler(context));
+  }
+  
+  @Override
+  public MessageResponse deleteExternalCollection() {
+    return TransactionExecutor
+        .executeTransaction(DBHandlerBuilder.buildDeleteExternalCollectionHandler(context));
+  }
+  
+  @Override
+  public MessageResponse fetchExternalCollection() {
+    return TransactionExecutor
+        .executeTransaction(DBHandlerBuilder.buildFetchExternalCollectionHandler(context));
+  }
 
 }
