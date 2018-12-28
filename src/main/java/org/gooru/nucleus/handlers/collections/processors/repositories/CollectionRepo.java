@@ -23,4 +23,12 @@ public interface CollectionRepo {
 
   MessageResponse addResourceToCollection();
 
+  MessageResponse createExternalCollection();
+
+  MessageResponse updateExternalCollection();
+
+  MessageResponse deleteExternalCollection();
+
+  MessageResponse fetchExternalCollection();
+
 }

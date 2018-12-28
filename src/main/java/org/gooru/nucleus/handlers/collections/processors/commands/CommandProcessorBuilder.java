@@ -3,6 +3,7 @@ package org.gooru.nucleus.handlers.collections.processors.commands;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
+
 import org.gooru.nucleus.handlers.collections.constants.MessageConstants;
 import org.gooru.nucleus.handlers.collections.processors.Processor;
 import org.gooru.nucleus.handlers.collections.processors.ProcessorContext;
@@ -74,6 +75,30 @@ public enum CommandProcessorBuilder {
     @Override
     public Processor build(ProcessorContext context) {
       return new CollectionGetProcessor(context);
+    }
+  },
+  EXT_COLLECTION_DELETE(MessageConstants.MSG_OP_EXT_COLLECTION_DELETE) {
+    @Override
+    public Processor build(ProcessorContext context) {
+      return new ExCollectionDeleteProcessor(context);
+    }
+  },
+  EXT_COLLECTION_UPDATE(MessageConstants.MSG_OP_EXT_COLLECTION_UPDATE) {
+    @Override
+    public Processor build(ProcessorContext context) {
+      return new ExCollectionUpdateProcessor(context);
+    }
+  },
+  EXT_COLLECTION_CREATE(MessageConstants.MSG_OP_EXT_COLLECTION_CREATE) {
+    @Override
+    public Processor build(ProcessorContext context) {
+      return new ExCollectionCreateProcessor(context);
+    }
+  },
+  EXT_COLLECTION_GET(MessageConstants.MSG_OP_EXT_COLLECTION_GET) {
+    @Override
+    public Processor build(ProcessorContext context) {
+      return new ExCollectionGetProcessor(context);
     }
   };
 

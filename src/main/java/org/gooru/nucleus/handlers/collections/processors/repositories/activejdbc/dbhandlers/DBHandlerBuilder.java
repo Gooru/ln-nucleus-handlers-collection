@@ -42,5 +42,21 @@ public final class DBHandlerBuilder {
   public static DBHandler buildReorderContentInCollectionHandler(ProcessorContext context) {
     return new ReorderContentInCollectionHandler(context);
   }
+  
+  public static DBHandler buildCreateExternalCollectionHandler(ProcessorContext context) {
+    return new CreateExternalCollectionHandler(context);
+  }
+  
+  public static DBHandler buildUpdateExternalCollectionHandler(ProcessorContext context) {
+    return new UpdateExternalCollectionHandler(context);
+  }
+  
+  public static DBHandler buildDeleteExternalCollectionHandler(ProcessorContext context) {
+    return new DeleteExternalCollectionHandler(context);
+  }
+  
+  public static DBHandler buildFetchExternalCollectionHandler(ProcessorContext context) {
+    return new FetchExternalCollectionHandler(context);
+  }
 
 }

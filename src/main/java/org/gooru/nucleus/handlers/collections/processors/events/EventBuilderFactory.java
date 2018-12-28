@@ -13,6 +13,9 @@ public final class EventBuilderFactory {
   private static final String EVT_COLLECTION_CONTENT_ADD = "event.collection.content.add";
   private static final String EVT_COLLECTION_REORDER = "event.collection.content.reorder";
   private static final String EVT_COLLECTION_COLLABORATOR_UPDATE = "event.collection.collaborator.update";
+  private static final String EVT_EX_COLLECTION_DELETE = "event.external.collection.delete";
+  private static final String EVT_EX_COLLECTION_UPDATE = "event.external.collection.update";
+  private static final String EVT_EX_COLLECTION_CREATE = "event.external.collection.create";
 
   private static final String EVENT_NAME = "event.name";
   private static final String EVENT_BODY = "event.body";
@@ -54,6 +57,21 @@ public final class EventBuilderFactory {
     return () -> new JsonObject().put(EVENT_NAME, EVT_COLLECTION_COLLABORATOR_UPDATE)
         .put(EVENT_BODY,
             collaborators.put(COLLECTION_ID, collectionId));
+  }
+  
+  public static EventBuilder getCreateExCollectionEventBuilder(String collectionId) {
+      return () -> new JsonObject().put(EVENT_NAME, EVT_EX_COLLECTION_CREATE).put(EVENT_BODY,
+          new JsonObject().put(COLLECTION_ID, collectionId));
+  }
+  
+  public static EventBuilder getUpdateExCollectionEventBuilder(String collectionId) {
+      return () -> new JsonObject().put(EVENT_NAME, EVT_EX_COLLECTION_UPDATE).put(EVENT_BODY,
+          new JsonObject().put(COLLECTION_ID, collectionId));
+  }
+  
+  public static EventBuilder getDeleteExCollectionEventBuilder(String collectionId) {
+      return () -> new JsonObject().put(EVENT_NAME, EVT_EX_COLLECTION_DELETE).put(EVENT_BODY,
+          new JsonObject().put(COLLECTION_ID, collectionId));
   }
 
 }

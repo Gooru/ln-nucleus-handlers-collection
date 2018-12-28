@@ -32,6 +32,7 @@ public class AJEntityCollection extends Model {
   // Variables used
   public static final String ID = "id";
   public static final String COLLECTION = "collection";
+  public static final String COLLECTION_EXTERNAL = "collection-external";
   private static final String CREATOR_ID = "creator_id";
   public static final String PUBLISH_DATE = "publish_date";
   public static final String IS_DELETED = "is_deleted";
@@ -56,6 +57,7 @@ public class AJEntityCollection extends Model {
   public static final String UPDATED_AT = "updated_at";
   private static final String COLLECTION_TYPE_NAME = "content_container_type";
   private static final String COLLECTION_TYPE_VALUE = "collection";
+  private static final String COLLECTION_EX_TYPE_VALUE = "collection-external";
   private static final String GRADING_TYPE_NAME = "grading_type";
   public static final String REORDER_PAYLOAD_KEY = "order";
   private static final String LICENSE = "license";
@@ -81,6 +83,11 @@ public class AJEntityCollection extends Model {
           + "publish_status, thumbnail, learning_objective, license, metadata, taxonomy, setting, grading, primary_language, "
           + "visible_on_profile, collaborator, course_id, unit_id, lesson_id, tenant, tenant_root from collection "
           + "where id = ?::uuid and format = 'collection'::content_container_type and is_deleted = false";
+  public static final String FETCH_EXTERNAL_COLLECTION_QUERY =
+      "select id, title, owner_id, creator_id, original_creator_id, original_collection_id, publish_date, subformat, "
+          + "publish_status, thumbnail, learning_objective, metadata, taxonomy, visible_on_profile, url, login_required, "
+          + "course_id, unit_id, lesson_id, tenant, tenant_root, primary_language from collection where id = ?::uuid and format = "
+          + "'collection-external'::content_container_type and is_deleted = false";
   public static final String COURSE_COLLABORATOR_QUERY =
       "select collaborator from course where id = ?::uuid and is_deleted = false";
   public static final List<String> FETCH_QUERY_FIELD_LIST = Arrays
@@ -88,7 +95,11 @@ public class AJEntityCollection extends Model {
           "original_collection_id", "publish_date", "thumbnail", "learning_objective", "license",
           "metadata", "taxonomy", "setting", "grading", "primary_language", "visible_on_profile",
           "course_id", "unit_id", "lesson_id", "subformat");
-
+  public static final List<String> FETCH_EC_QUERY_FIELD_LIST = Arrays
+      .asList("id", "title", "owner_id", "creator_id", "original_creator_id",
+          "original_collection_id", "publish_date", "thumbnail", "learning_objective",
+          "metadata", "taxonomy", "visible_on_profile", "url",
+          "login_required", "course_id", "unit_id", "lesson_id", "subformat", "primary_language");
   public static final Set<String> EDITABLE_FIELDS = new HashSet<>(Arrays
       .asList(TITLE, THUMBNAIL, LEARNING_OBJECTIVE, METADATA, TAXONOMY, URL, LOGIN_REQUIRED,
           VISIBLE_ON_PROFILE, SETTING, PRIMARY_LANGUAGE));
@@ -100,6 +111,8 @@ public class AJEntityCollection extends Model {
   public static final Set<String> REORDER_FIELDS = new HashSet<>(
       Arrays.asList(REORDER_PAYLOAD_KEY));
   public static final Set<String> AGGREGATE_TAGS_FIELDS = new HashSet<>(Arrays.asList(TAXONOMY));
+  private static final Set<String> CREATABLE_EX_FIELDS = EDITABLE_FIELDS;
+  private static final Set<String> MANDATORY_EX_FIELDS = new HashSet<>(Arrays.asList(TITLE, URL, LOGIN_REQUIRED));
 
   private static final Map<String, FieldValidator> validatorRegistry;
   private static final Map<String, FieldConverter> converterRegistry;
@@ -207,6 +220,24 @@ public class AJEntityCollection extends Model {
       }
     };
   }
+  
+  public static FieldSelector createExFieldSelector() {
+      return new FieldSelector() {
+        @Override
+        public Set<String> allowedFields() {
+          return Collections.unmodifiableSet(CREATABLE_EX_FIELDS);
+        }
+
+        @Override
+        public Set<String> mandatoryFields() {
+          return Collections.unmodifiableSet(MANDATORY_EX_FIELDS);
+        }
+      };
+  }
+  
+  public static FieldSelector editExFieldSelector() {
+      return () -> Collections.unmodifiableSet(EDITABLE_FIELDS);
+  }
 
   public static FieldSelector addQuestionFieldSelector() {
     return () -> Collections.unmodifiableSet(ADD_QUESTION_FIELDS);
@@ -246,6 +277,10 @@ public class AJEntityCollection extends Model {
 
   public void setTypeCollection() {
     setFieldUsingConverter(FORMAT, COLLECTION_TYPE_VALUE);
+  }
+  
+  public void setTypeExCollection() {
+    setFieldUsingConverter(FORMAT, COLLECTION_EX_TYPE_VALUE);
   }
 
   public void setTenant(String tenant) {
@@ -288,7 +323,7 @@ public class AJEntityCollection extends Model {
   public String getTenantRoot() {
     return this.getString(TENANT_ROOT);
   }
-
+    
   private void setPGObject(String field, String type, String value) {
     PGobject pgObject = new PGobject();
     pgObject.setType(type);

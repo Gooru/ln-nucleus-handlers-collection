@@ -29,6 +29,12 @@ public final class MessageConstants {
   public static final String MSG_OP_COLLECTION_CONTENT_REORDER = "collection.content.reorder";
   public static final String MSG_OP_COLLECTION_RESOURCE_ADD = "collection.resource.add";
 
+  // Operation names for external Collection: Need to be updated in gateway
+  public static final String MSG_OP_EXT_COLLECTION_GET = "ext.collection.get";
+  public static final String MSG_OP_EXT_COLLECTION_CREATE = "ext.collection.create";
+  public static final String MSG_OP_EXT_COLLECTION_UPDATE = "ext.collection.update";
+  public static final String MSG_OP_EXT_COLLECTION_DELETE = "ext.collection.delete";
+  
   // Containers for different responses
   public static final String RESP_CONTAINER_MBUS = "mb.container";
   public static final String RESP_CONTAINER_EVENT = "mb.event";
