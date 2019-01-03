@@ -1,12 +1,15 @@
 package org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbhandlers;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import java.util.HashSet;
 import java.util.ResourceBundle;
+import java.util.Set;
+
 import org.gooru.nucleus.handlers.collections.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbhelpers.DbHelperUtil;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityCollection;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityContent;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityRubric;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.formatter.JsonFormatterBuilder;
 import org.gooru.nucleus.handlers.collections.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
@@ -16,6 +19,9 @@ import org.javalite.activejdbc.DBException;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 /**
  * Created by ashish on 12/1/16.
@@ -77,10 +83,33 @@ class FetchCollectionHandler implements DBHandler {
         AJEntityContent
             .findBySQL(AJEntityContent.FETCH_CONTENT_SUMMARY_QUERY, context.collectionId());
     if (contents.size() > 0) {
-      response.put(AJEntityContent.CONTENT, new JsonArray(
+      Set<String> oeQuestionIds = new HashSet<>(); 
+      contents.stream().filter(
+         map -> map.get(AJEntityContent.CONTENT_SUBFORMAT) != null && AJEntityContent.RUBRIC_ASSOCIATION_ALLOWED_TYPES
+            .contains(map.getString(AJEntityContent.CONTENT_SUBFORMAT))).forEach(map -> {
+                oeQuestionIds.add(map.get(AJEntityContent.ID).toString());
+            });
+            
+      JsonArray contentsArray = new JsonArray(
           JsonFormatterBuilder
-              .buildSimpleJsonFormatter(false, AJEntityContent.FETCH_CONTENT_SUMMARY_FIELDS)
-              .toJson(contents)));
+          .buildSimpleJsonFormatter(false, AJEntityContent.FETCH_CONTENT_SUMMARY_FIELDS)
+          .toJson(contents));
+      if (!oeQuestionIds.isEmpty()) {
+        LazyList<AJEntityRubric> rubrics =
+          AJEntityRubric.findBySQL(AJEntityRubric.FETCH_RUBRIC_SUMMARY, DbHelperUtil.toPostgresArrayString(oeQuestionIds));
+        if (rubrics != null && !rubrics.isEmpty()) {
+          rubrics.forEach(rubric -> {
+              contentsArray.stream().filter(
+                   map -> ((JsonObject)map).getString(AJEntityContent.ID) != null && rubric.get(AJEntityRubric.CONTENT_ID).toString()
+                  .contains(((JsonObject)map).getString(AJEntityContent.ID))).forEach(question -> {
+                      if (!rubric.getBoolean(AJEntityRubric.IS_RUBRIC)) {
+                        ((JsonObject) question).put(AJEntityContent.MAX_SCORE, rubric.get(AJEntityRubric.MAX_SCORE));
+                      }
+                  });
+          });
+        }
+      }
+      response.put(AJEntityContent.CONTENT, contentsArray);
     } else {
       response.put(AJEntityContent.CONTENT, new JsonArray());
     }
