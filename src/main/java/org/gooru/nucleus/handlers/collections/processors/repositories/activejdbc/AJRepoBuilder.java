@@ -8,12 +8,12 @@ import org.gooru.nucleus.handlers.collections.processors.repositories.Collection
  */
 public final class AJRepoBuilder {
 
-    private AJRepoBuilder() {
-        throw new AssertionError();
-    }
+  private AJRepoBuilder() {
+    throw new AssertionError();
+  }
 
-    public static CollectionRepo buildCollectionRepo(ProcessorContext context) {
-        return new AJCollectionRepo(context);
-    }
+  public static CollectionRepo buildCollectionRepo(ProcessorContext context) {
+    return new AJCollectionRepo(context);
+  }
 
 }

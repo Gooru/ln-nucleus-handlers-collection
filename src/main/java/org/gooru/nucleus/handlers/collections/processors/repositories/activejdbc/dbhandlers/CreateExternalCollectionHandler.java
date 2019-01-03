@@ -1,14 +1,13 @@
 package org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbhandlers;
 
-import io.vertx.core.json.JsonObject;
 import java.util.Map;
 import java.util.ResourceBundle;
+
 import org.gooru.nucleus.handlers.collections.constants.MessageConstants;
 import org.gooru.nucleus.handlers.collections.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.collections.processors.events.EventBuilderFactory;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbhelpers.GUTCodeLookupHelper;
-import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbutils.LicenseUtil;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entities.AJEntityCollection;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.entitybuilders.EntityBuilder;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.validators.PayloadValidator;
@@ -19,41 +18,45 @@ import org.gooru.nucleus.handlers.collections.processors.utils.CommonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Created by ashish on 12/1/16.
- */
-class CreateCollectionHandler implements DBHandler {
+import io.vertx.core.json.JsonObject;
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(CreateCollectionHandler.class);
-  private static final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
+/**
+ * Created by renuka on 24/12/18.
+ */
+public class CreateExternalCollectionHandler implements DBHandler {
+
+  private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");
+  private static final Logger LOGGER = LoggerFactory
+      .getLogger(CreateExternalCollectionHandler.class);
   private final ProcessorContext context;
 
-  public CreateCollectionHandler(ProcessorContext context) {
+  public CreateExternalCollectionHandler(ProcessorContext context) {
     this.context = context;
   }
 
   @Override
   public ExecutionResult<MessageResponse> checkSanity() {
     // The user should not be anonymous
-    if ((context.userId() == null) || context.userId().isEmpty()
-        || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
+    if (context.userId() == null || context.userId().isEmpty() || context.userId()
+        .equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
       LOGGER.warn("Anonymous or invalid user attempting to create collection");
       return new ExecutionResult<>(
-          MessageResponseFactory.createForbiddenResponse(resourceBundle.getString("not.allowed")),
+          MessageResponseFactory.createForbiddenResponse(RESOURCE_BUNDLE.getString("not.allowed")),
           ExecutionResult.ExecutionStatus.FAILED);
     }
     // Payload should not be empty
-    if ((context.request() == null) || context.request().isEmpty()) {
+    if (context.request() == null || context.request().isEmpty()) {
       LOGGER.warn("Empty payload supplied to create collection");
       return new ExecutionResult<>(
           MessageResponseFactory
-              .createInvalidRequestResponse(resourceBundle.getString("payload.empty")),
+              .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("empty.payload")),
           ExecutionResult.ExecutionStatus.FAILED);
     }
     // Our validators should certify this
-    JsonObject errors = new DefaultPayloadValidator().validatePayload(context.request(),
-        AJEntityCollection.createFieldSelector(), AJEntityCollection.getValidatorRegistry());
-    if ((errors != null) && !errors.isEmpty()) {
+    JsonObject errors = new DefaultPayloadValidator()
+        .validatePayload(context.request(), AJEntityCollection.createExFieldSelector(),
+            AJEntityCollection.getValidatorRegistry());
+    if (errors != null && !errors.isEmpty()) {
       LOGGER.warn("Validation errors for request");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors),
           ExecutionResult.ExecutionStatus.FAILED);
@@ -69,11 +72,11 @@ class CreateCollectionHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
-    AJEntityCollection collection = new AJEntityCollection();
-    // Now auto populate is done, we need to setup the converter machinery
+      AJEntityCollection collection = new AJEntityCollection();
     autoPopulateFields(collection);
-    new DefaultAJEntityCollectionEntityBuilder().build(collection, context.request(),
-        AJEntityCollection.getConverterRegistry());
+
+    new DefaultAJEntityCollectionEntityBuilder()
+        .build(collection, context.request(), AJEntityCollection.getConverterRegistry());
 
     JsonObject newTags = this.context.request().getJsonObject(AJEntityCollection.TAXONOMY);
     if (newTags != null && !newTags.isEmpty()) {
@@ -96,20 +99,19 @@ class CreateCollectionHandler implements DBHandler {
     return new ExecutionResult<>(
         MessageResponseFactory.createCreatedResponse(collection.getId().toString(),
             EventBuilderFactory
-                .getCreateCollectionEventBuilder(collection.getString(AJEntityCollection.ID))),
+                .getCreateExCollectionEventBuilder(collection.getString(AJEntityCollection.ID))),
         ExecutionResult.ExecutionStatus.SUCCESSFUL);
   }
 
-  private void autoPopulateFields(AJEntityCollection collection) {
-    collection.setModifierId(context.userId());
-    collection.setOwnerId(context.userId());
-    collection.setCreatorId(context.userId());
-    collection.setTypeCollection();
-    collection.setLicense(LicenseUtil.getDefaultLicenseCode());
-    collection.setTenant(context.tenant());
+  private void autoPopulateFields(AJEntityCollection assessment) {
+    assessment.setModifierId(context.userId());
+    assessment.setOwnerId(context.userId());
+    assessment.setCreatorId(context.userId());
+    assessment.setTypeExCollection();
+    assessment.setTenant(context.tenant());
     String tenantRoot = context.tenantRoot();
     if (tenantRoot != null && !tenantRoot.isEmpty()) {
-      collection.setTenantRoot(tenantRoot);
+      assessment.setTenantRoot(tenantRoot);
     }
   }
 

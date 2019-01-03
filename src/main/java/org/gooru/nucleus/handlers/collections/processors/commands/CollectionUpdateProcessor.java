@@ -11,21 +11,22 @@ import org.gooru.nucleus.handlers.collections.processors.responses.MessageRespon
  * @author ashish on 30/12/16.
  */
 class CollectionUpdateProcessor extends AbstractCommandProcessor {
-    public CollectionUpdateProcessor(ProcessorContext context) {
-        super(context);
-    }
 
-    @Override
-    protected void setDeprecatedVersions() {
+  public CollectionUpdateProcessor(ProcessorContext context) {
+    super(context);
+  }
 
-    }
+  @Override
+  protected void setDeprecatedVersions() {
 
-    @Override
-    protected MessageResponse processCommand() {
-        if (!validateContext(context)) {
-            return MessageResponseFactory
-                .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("collection.id.invalid"));
-        }
-        return RepoBuilder.buildCollectionRepo(context).updateCollection();
+  }
+
+  @Override
+  protected MessageResponse processCommand() {
+    if (!validateContext(context)) {
+      return MessageResponseFactory
+          .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("collection.id.invalid"));
     }
+    return RepoBuilder.buildCollectionRepo(context).updateCollection();
+  }
 }

@@ -5,11 +5,11 @@ import org.gooru.nucleus.handlers.collections.processors.repositories.RepoBuilde
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
 
 /**
- * @author ashish on 30/12/16.
+ * @author renuka on 24/12/18.
  */
-class CollectionCreateProcessor extends AbstractCommandProcessor {
+public class ExCollectionCreateProcessor extends AbstractCommandProcessor {
 
-  public CollectionCreateProcessor(ProcessorContext context) {
+  public ExCollectionCreateProcessor(ProcessorContext context) {
     super(context);
   }
 
@@ -20,6 +20,6 @@ class CollectionCreateProcessor extends AbstractCommandProcessor {
 
   @Override
   protected MessageResponse processCommand() {
-    return RepoBuilder.buildCollectionRepo(context).createCollection();
+    return RepoBuilder.buildCollectionRepo(context).createExternalCollection();
   }
 }

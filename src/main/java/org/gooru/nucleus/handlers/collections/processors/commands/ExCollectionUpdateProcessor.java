@@ -8,11 +8,11 @@ import org.gooru.nucleus.handlers.collections.processors.responses.MessageRespon
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponseFactory;
 
 /**
- * @author ashish on 30/12/16.
+ * @author renuka on 24/12/18.
  */
-class CollectionCollaboratorUpdateProcessor extends AbstractCommandProcessor {
+class ExCollectionUpdateProcessor extends AbstractCommandProcessor {
 
-  public CollectionCollaboratorUpdateProcessor(ProcessorContext context) {
+  public ExCollectionUpdateProcessor(ProcessorContext context) {
     super(context);
   }
 
@@ -25,8 +25,8 @@ class CollectionCollaboratorUpdateProcessor extends AbstractCommandProcessor {
   protected MessageResponse processCommand() {
     if (!validateContext(context)) {
       return MessageResponseFactory
-          .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("collection.id.invalid"));
+          .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("invalid.collection.id"));
     }
-    return RepoBuilder.buildCollectionRepo(context).updateCollaborator();
+    return RepoBuilder.buildCollectionRepo(context).updateExternalCollection();
   }
 }
