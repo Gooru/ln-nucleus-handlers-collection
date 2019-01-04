@@ -50,6 +50,10 @@ public class AJEntityContent extends Model {
   public static final String CONTENT = "content";
   public static final String ORIGINAL_CONTENT_ID = "original_content_id";
   public static final String PARENT_CONTENT_ID = "parent_content_id";
+  public static final String MAX_SCORE = "max_score";
+  public static final String ID = "id";
+  public static final List<String> RUBRIC_ASSOCIATION_ALLOWED_TYPES = Arrays.asList("open_ended_question"); 
+  public static final String CONTENT_SUBFORMAT = "content_subformat";
 
   public boolean isContentOriginal() {
     String originalContentId = this.getString(ORIGINAL_CONTENT_ID);
