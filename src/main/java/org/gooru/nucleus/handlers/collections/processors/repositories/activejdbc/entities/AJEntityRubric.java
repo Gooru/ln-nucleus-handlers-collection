@@ -12,11 +12,11 @@ import org.javalite.activejdbc.annotations.Table;
 @Table("rubric")
 public class AJEntityRubric extends Model {
 
-    public static final String ID = "id";
-    public static final String CONTENT_ID = "content_id";
-    public static final String IS_RUBRIC = "is_rubric";
-    public static final String SCORING = "scoring";
-    public static final String MAX_SCORE = "max_score";
+  public static final String ID = "id";
+  public static final String CONTENT_ID = "content_id";
+  public static final String IS_RUBRIC = "is_rubric";
+  public static final String SCORING = "scoring";
+  public static final String MAX_SCORE = "max_score";
 
   public static final String DELETE_RUBRICS_QUERY =
       "UPDATE rubric SET is_deleted = true, modifier_id = ?::uuid WHERE collection_id = ?::uuid AND is_deleted = false";

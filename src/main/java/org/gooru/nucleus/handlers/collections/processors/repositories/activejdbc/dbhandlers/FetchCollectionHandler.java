@@ -83,12 +83,13 @@ class FetchCollectionHandler implements DBHandler {
         AJEntityContent
             .findBySQL(AJEntityContent.FETCH_CONTENT_SUMMARY_QUERY, context.collectionId());
     if (contents.size() > 0) {
-      Set<String> oeQuestionIds = new HashSet<>(); 
-      contents.stream().filter(
-         map -> map.get(AJEntityContent.CONTENT_SUBFORMAT) != null && AJEntityContent.RUBRIC_ASSOCIATION_ALLOWED_TYPES
-            .contains(map.getString(AJEntityContent.CONTENT_SUBFORMAT))).forEach(map -> {
-                oeQuestionIds.add(map.get(AJEntityContent.ID).toString());
-            });
+      Set<String> oeQuestionIds = new HashSet<>();
+      for (AJEntityContent content : contents) {
+          if (content.get(AJEntityContent.CONTENT_SUBFORMAT) != null && AJEntityContent.RUBRIC_ASSOCIATION_ALLOWED_TYPES
+              .contains(content.getString(AJEntityContent.CONTENT_SUBFORMAT))) {
+              oeQuestionIds.add(content.get(AJEntityContent.ID).toString());
+          }
+      }
             
       JsonArray contentsArray = new JsonArray(
           JsonFormatterBuilder
@@ -99,13 +100,15 @@ class FetchCollectionHandler implements DBHandler {
           AJEntityRubric.findBySQL(AJEntityRubric.FETCH_RUBRIC_SUMMARY, DbHelperUtil.toPostgresArrayString(oeQuestionIds));
         if (rubrics != null && !rubrics.isEmpty()) {
           rubrics.forEach(rubric -> {
-              contentsArray.stream().filter(
-                   map -> ((JsonObject)map).getString(AJEntityContent.ID) != null && rubric.get(AJEntityRubric.CONTENT_ID).toString()
-                  .contains(((JsonObject)map).getString(AJEntityContent.ID))).forEach(question -> {
+              for (Object contentObject : contentsArray) {
+                  JsonObject question = (JsonObject) contentObject;
+                  if (question.getString(AJEntityContent.ID) != null && rubric.get(AJEntityRubric.CONTENT_ID).toString()
+                      .contains(question.getString(AJEntityContent.ID))) {
                       if (!rubric.getBoolean(AJEntityRubric.IS_RUBRIC)) {
-                        ((JsonObject) question).put(AJEntityContent.MAX_SCORE, rubric.get(AJEntityRubric.MAX_SCORE));
+                        question.put(AJEntityContent.MAX_SCORE, rubric.get(AJEntityRubric.MAX_SCORE));
                       }
-                  });
+                  }
+              }
           });
         }
       }
