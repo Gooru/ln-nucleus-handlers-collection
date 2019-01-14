@@ -111,8 +111,6 @@ public class AJEntityCollection extends Model {
   public static final Set<String> REORDER_FIELDS = new HashSet<>(
       Arrays.asList(REORDER_PAYLOAD_KEY));
   public static final Set<String> AGGREGATE_TAGS_FIELDS = new HashSet<>(Arrays.asList(TAXONOMY));
-  private static final Set<String> CREATABLE_EX_FIELDS = EDITABLE_FIELDS;
-  private static final Set<String> MANDATORY_EX_FIELDS = new HashSet<>(Arrays.asList(TITLE, URL, LOGIN_REQUIRED));
 
   private static final Map<String, FieldValidator> validatorRegistry;
   private static final Map<String, FieldConverter> converterRegistry;
@@ -225,12 +223,12 @@ public class AJEntityCollection extends Model {
       return new FieldSelector() {
         @Override
         public Set<String> allowedFields() {
-          return Collections.unmodifiableSet(CREATABLE_EX_FIELDS);
+          return Collections.unmodifiableSet(CREATABLE_FIELDS);
         }
 
         @Override
         public Set<String> mandatoryFields() {
-          return Collections.unmodifiableSet(MANDATORY_EX_FIELDS);
+          return Collections.unmodifiableSet(MANDATORY_FIELDS);
         }
       };
   }
