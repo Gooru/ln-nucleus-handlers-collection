@@ -49,7 +49,7 @@ public class CreateExternalCollectionHandler implements DBHandler {
       LOGGER.warn("Empty payload supplied to create collection");
       return new ExecutionResult<>(
           MessageResponseFactory
-              .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("empty.payload")),
+              .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("payload.empty")),
           ExecutionResult.ExecutionStatus.FAILED);
     }
     // Our validators should certify this
