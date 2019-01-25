@@ -15,12 +15,12 @@ public interface FieldValidator {
   Logger LOGGER = LoggerFactory.getLogger(FieldValidator.class);
 
   static boolean validateStringIfPresent(Object o, int len) {
-    return o == null || o instanceof String && !((String) o).isEmpty()
-        && ((String) o).length() < len;
+    return o == null || (o instanceof String && !((String) o).trim().isEmpty()
+        && ((String) o).length() < len);
   }
 
   static boolean validateString(Object o, int len) {
-    return !(o == null || !(o instanceof String) || ((String) o).isEmpty() || (((String) o).length()
+    return !(o == null || !(o instanceof String) || ((String) o).trim().isEmpty() || (((String) o).length()
         > len));
   }
 
