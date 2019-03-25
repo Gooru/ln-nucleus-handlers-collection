@@ -1,12 +1,14 @@
 package org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.transactions;
 
 import java.sql.SQLException;
-import java.util.ResourceBundle;
+import java.util.List;
+
 import org.gooru.nucleus.handlers.collections.app.components.DataSourceRegistry;
 import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.dbhandlers.DBHandler;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.transactions.exceptionhandlers.ExceptionHandler;
+import org.gooru.nucleus.handlers.collections.processors.repositories.activejdbc.transactions.exceptionhandlers.ExceptionHandlerRegistry;
 import org.gooru.nucleus.handlers.collections.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponse;
-import org.gooru.nucleus.handlers.collections.processors.responses.MessageResponseFactory;
 import org.javalite.activejdbc.Base;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +19,7 @@ import org.slf4j.LoggerFactory;
 public final class TransactionExecutor {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TransactionExecutor.class);
-  private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");
+  private static final List<ExceptionHandler> EXCEPTION_HANDLERS = ExceptionHandlerRegistry.getInstance().getHandlers() ;
 
   private TransactionExecutor() {
     throw new AssertionError();
@@ -59,12 +61,14 @@ public final class TransactionExecutor {
     } catch (Throwable e) {
       Base.rollbackTransaction();
       LOGGER.error("Caught exception, need to rollback and abort", e);
-      // Most probably we do not know what to do with this, so send
-      // internal error
-      return new ExecutionResult<>(
-          MessageResponseFactory
-              .createInternalErrorResponse(RESOURCE_BUNDLE.getString("internal.store.error")),
-          ExecutionResult.ExecutionStatus.FAILED);
+      ExecutionResult<MessageResponse> executionResponse = null;
+      for (ExceptionHandler exceptionHandler : EXCEPTION_HANDLERS) {
+        executionResponse = exceptionHandler.handleError(e);
+        if (executionResponse.result() != null) {
+          break;
+        }
+      }
+      return executionResponse;
     } finally {
       if (handler.handlerReadOnly()) {
         // restore the settings
