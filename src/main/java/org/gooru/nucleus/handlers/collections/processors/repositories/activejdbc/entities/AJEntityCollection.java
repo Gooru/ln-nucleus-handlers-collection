@@ -209,7 +209,7 @@ public class AJEntityCollection extends Model {
     return new FieldSelector() {
       @Override
       public Set<String> mandatoryFields() {
-        return Collections.unmodifiableSet(COLLABORATOR_FIELDS);
+        return Collections.emptySet();
       }
 
       @Override
@@ -218,23 +218,23 @@ public class AJEntityCollection extends Model {
       }
     };
   }
-  
-  public static FieldSelector createExFieldSelector() {
-      return new FieldSelector() {
-        @Override
-        public Set<String> allowedFields() {
-          return Collections.unmodifiableSet(CREATABLE_FIELDS);
-        }
 
-        @Override
-        public Set<String> mandatoryFields() {
-          return Collections.unmodifiableSet(MANDATORY_FIELDS);
-        }
-      };
+  public static FieldSelector createExFieldSelector() {
+    return new FieldSelector() {
+      @Override
+      public Set<String> allowedFields() {
+        return Collections.unmodifiableSet(CREATABLE_FIELDS);
+      }
+
+      @Override
+      public Set<String> mandatoryFields() {
+        return Collections.unmodifiableSet(MANDATORY_FIELDS);
+      }
+    };
   }
-  
+
   public static FieldSelector editExFieldSelector() {
-      return () -> Collections.unmodifiableSet(EDITABLE_FIELDS);
+    return () -> Collections.unmodifiableSet(EDITABLE_FIELDS);
   }
 
   public static FieldSelector addQuestionFieldSelector() {
@@ -276,7 +276,7 @@ public class AJEntityCollection extends Model {
   public void setTypeCollection() {
     setFieldUsingConverter(FORMAT, COLLECTION_TYPE_VALUE);
   }
-  
+
   public void setTypeExCollection() {
     setFieldUsingConverter(FORMAT, COLLECTION_EX_TYPE_VALUE);
   }
@@ -321,7 +321,7 @@ public class AJEntityCollection extends Model {
   public String getTenantRoot() {
     return this.getString(TENANT_ROOT);
   }
-    
+
   private void setPGObject(String field, String type, String value) {
     PGobject pgObject = new PGobject();
     pgObject.setType(type);

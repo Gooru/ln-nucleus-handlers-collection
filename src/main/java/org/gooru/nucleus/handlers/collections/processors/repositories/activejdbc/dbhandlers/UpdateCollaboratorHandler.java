@@ -157,8 +157,9 @@ class UpdateCollaboratorHandler implements DBHandler {
     currentCollaborators =
         currentCollaboratorsAsString != null && !currentCollaboratorsAsString.isEmpty() ?
             new JsonArray(currentCollaboratorsAsString) : new JsonArray();
-    JsonArray newCollaborators = this.context.request()
-        .getJsonArray(AJEntityCollection.COLLABORATOR);
+    JsonArray newCollaborators =
+        this.context.request().getJsonArray(AJEntityCollection.COLLABORATOR) != null ? this.context
+            .request().getJsonArray(AJEntityCollection.COLLABORATOR) : new JsonArray();
     if (currentCollaborators.isEmpty() && !newCollaborators.isEmpty()) {
       // Adding all
       result.put(COLLABORATORS_ADDED, newCollaborators.copy());
